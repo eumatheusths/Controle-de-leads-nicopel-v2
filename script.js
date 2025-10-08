@@ -1,4 +1,6 @@
 // --- CONFIGURAÇÕES E MAPEAMENTO DE COLUNAS ---
+// Se suas colunas estiverem em posições diferentes, ajuste os números aqui.
+// A=0, B=1, C=2, etc.
 const COLUMNS = {
     ORIGEM: 1,      // Coluna B
     STATUS: 4,      // Coluna E
@@ -9,7 +11,7 @@ const COLUMNS = {
 
 // --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
-let charts = {};
+let charts = {}; // Objeto para armazenar as instâncias dos gráficos
 
 // --- FUNÇÃO PRINCIPAL PARA BUSCAR DADOS ---
 async function fetchData() {
@@ -87,13 +89,11 @@ function updateDashboard() {
     document.getElementById('kpi-leads-desqualificados').innerText = leadsDesqualificados;
     document.getElementById('kpi-faturamento').innerText = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    // Popula os deltas com valores placeholder
     document.getElementById('delta-total-leads').innerText = '--%';
     document.getElementById('delta-leads-qualificados').innerText = '--%';
     document.getElementById('delta-vendas-fechadas').innerText = '--%';
     document.getElementById('delta-leads-desqualificados').innerText = '--%';
     document.getElementById('delta-faturamento').innerText = '--%';
-
 
     updateChartData(charts.origem, filteredData, 'onde_encontrou');
     updateChartData(charts.segmento, filteredData, 'segmento');
@@ -103,14 +103,15 @@ function updateDashboard() {
 
 // --- FUNÇÕES DOS GRÁFICOS (CHART.JS) ---
 function createCharts() {
-    Chart.defaults.color = 'white'; // Cor padrão para textos dos gráficos
-    charts.origem = createChart('grafico-origem', 'doughnut');
-    charts.segmento = createChart('grafico-segmento', 'bar');
-    charts.crm = createChart('grafico-crm', 'pie');
-    charts.delegados = createChart('grafico-delegados', 'bar');
+    const textColor = '#9CA3AF'; // CORRIGIDO: Usando o valor da cor diretamente
+    Chart.defaults.color = textColor;
+    charts.origem = createChart('grafico-origem', 'doughnut', textColor);
+    charts.segmento = createChart('grafico-segmento', 'bar', textColor);
+    charts.crm = createChart('grafico-crm', 'pie', textColor);
+    charts.delegados = createChart('grafico-delegados', 'bar', textColor);
 }
 
-function createChart(canvasId, type) {
+function createChart(canvasId, type, textColor) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
         type: type,
@@ -120,16 +121,16 @@ function createChart(canvasId, type) {
             plugins: {
                 legend: {
                     position: type.includes('pie') || type.includes('doughnut') ? 'right' : 'none',
-                    labels: { color: var(--cor-texto-secundario) }
+                    labels: { color: textColor } // CORRIGIDO
                 }
             },
             scales: type === 'bar' ? {
                 y: { 
-                    ticks: { color: var(--cor-texto-secundario) },
+                    ticks: { color: textColor }, // CORRIGIDO
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 },
                 x: { 
-                    ticks: { color: var(--cor-texto-secundario) },
+                    ticks: { color: textColor }, // CORRIGIDO
                     grid: { color: 'transparent' }
                 }
             } : {}
@@ -160,8 +161,8 @@ function updateChartData(chart, data, property) {
         chart.data.datasets[0].data = Object.values(counts);
     }
     
-    chart.data.datasets[0].backgroundColor = [ '#4338CA', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ];
-    chart.data.datasets[0].borderColor = '#1F2937'; // Cor de fundo do card para dar espaçamento
+    chart.data.datasets[0].backgroundColor = [ '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ];
+    chart.data.datasets[0].borderColor = '#1F2937';
     chart.update();
 }
 
