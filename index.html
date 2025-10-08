@@ -7,7 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,16 +19,14 @@
             --cor-texto-principal: #F9FAFB;
             --cor-texto-secundario: #9CA3AF;
             --cor-acento: #4F46E5;
-            --cor-grafico-1: #4F46E5;
-            --cor-grafico-2: #10B981;
-            --cor-grafico-3: #F59E0B;
-            --cor-grafico-4: #EF4444;
+            --cor-verde: #10B981;
+            --cor-vermelho: #EF4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Syne', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--cor-fundo);
             color: var(--cor-texto-principal);
             padding: 2rem;
@@ -52,6 +50,13 @@
             color: var(--cor-texto-secundario);
             font-size: 1rem;
             display: block;
+            margin-top: 4px;
+        }
+
+        .filter-container label {
+            font-weight: 500;
+            color: var(--cor-texto-secundario);
+            margin-right: 0.5rem;
         }
 
         .filter-container select {
@@ -60,13 +65,13 @@
             border: 1px solid var(--cor-borda);
             border-radius: 8px;
             padding: 0.5rem 1rem;
-            font-family: 'Syne', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-weight: 700;
         }
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(5, 1fr);
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -80,20 +85,37 @@
 
         .kpi-card-title {
             font-size: 0.9rem;
-            font-weight: 700;
+            font-weight: 500;
             color: var(--cor-texto-secundario);
             margin-bottom: 0.5rem;
         }
+        
+        .kpi-card-main {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+        }
 
         .kpi-card-value {
-            font-size: 2.5rem;
+            font-size: 2.25rem;
             font-weight: 800;
             color: var(--cor-texto-principal);
+            line-height: 1;
         }
+        
+        .kpi-card-delta {
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding-bottom: 4px; /* Alinha com a base do número principal */
+        }
+        
+        .kpi-card-delta.positive { color: var(--cor-verde); }
+        .kpi-card-delta.negative { color: var(--cor-vermelho); }
+
 
         .charts-grid {
             display: grid;
-            grid-template-columns: 1fr 2fr; /* Coluna da esquerda menor, da direita maior */
+            grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
 
@@ -102,7 +124,7 @@
             padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--cor-borda);
-            min-height: 350px;
+            min-height: 380px;
         }
         
         .chart-container h2 {
@@ -117,15 +139,24 @@
             font-size: 1.5rem;
             padding: 4rem;
         }
-
-        @media (max-width: 1024px) {
-            .charts-grid { grid-template-columns: 1fr; }
+        
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
+
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .kpi-card-value { font-size: 2rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .kpi-card-value { font-size: 1.8rem; }
+        }
+        
+        @media (max-width: 480px) {
+             .kpi-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -151,23 +182,38 @@
             <section class="kpi-grid">
                 <div class="kpi-card">
                     <p class="kpi-card-title">Total de Leads</p>
-                    <p class="kpi-card-value" id="kpi-total-leads">--</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-total-leads">--</p>
+                        <p class="kpi-card-delta" id="delta-total-leads">--%</p>
+                    </div>
                 </div>
                 <div class="kpi-card">
                     <p class="kpi-card-title">Leads Qualificados</p>
-                    <p class="kpi-card-value" id="kpi-leads-qualificados">--</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-qualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-qualificados">--%</p>
+                    </div>
                 </div>
                 <div class="kpi-card">
                     <p class="kpi-card-title">Vendas Fechadas</p>
-                    <p class="kpi-card-value" id="kpi-vendas-fechadas">--</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-vendas-fechadas">--</p>
+                        <p class="kpi-card-delta" id="delta-vendas-fechadas">--%</p>
+                    </div>
                 </div>
                 <div class="kpi-card">
                     <p class="kpi-card-title">Leads Desqualificados</p>
-                    <p class="kpi-card-value" id="kpi-leads-desqualificados">--</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-desqualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-desqualificados">--%</p>
+                    </div>
                 </div>
                 <div class="kpi-card">
                     <p class="kpi-card-title">Faturamento Total</p>
-                    <p class="kpi-card-value" id="kpi-faturamento">R$ --</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-faturamento">R$ --</p>
+                         <p class="kpi-card-delta" id="delta-faturamento">--%</p>
+                    </div>
                 </div>
             </section>
 
