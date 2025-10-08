@@ -77,48 +77,42 @@
             .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
         }
 
-        /* --- MUDANÇAS AQUI: ESTILOS DE IMPRESSÃO APRIMORADOS --- */
+        /* --- MUDANÇAS AQUI: ESTILOS DE IMPRESSÃO OTIMIZADOS --- */
         @media print {
-            /* Força o navegador a renderizar as cores de fundo */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-            body { background-color: #fff !important; color: #000 !important; padding: 20px; font-size: 9pt; }
-            .header, #print-button, #theme-toggle, #loading-message { display: none; }
-            
-            #print-header {
-                display: block; margin-bottom: 20px; border-bottom: 2px solid #666; padding-bottom: 10px;
+            body {
+                background-color: #fff !important; color: #000 !important;
+                padding: 20px; font-size: 9pt;
             }
-            #print-header h2 { font-size: 18pt; color: #000; text-align: left; }
-            #print-header p { font-size: 11pt; margin: 4px 0; color: #333; }
+            .header, #print-button, #theme-toggle, #loading-message { display: none; }
+            #print-header {
+                display: block; margin-bottom: 1.5rem;
+                border-bottom: 2px solid #666; padding-bottom: 1rem;
+            }
+            #print-header h2 { font-size: 16pt; color: #000; text-align: left; }
+            #print-header p { font-size: 10pt; margin: 4px 0; color: #333; }
             
             .kpi-grid {
-                grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;
+                grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px;
             }
-            .kpi-card {
-                border: 1px solid #ccc; box-shadow: none; padding: 10px;
-            }
-            .kpi-card-title { font-size: 8pt; margin-bottom: 5px; }
+            .kpi-card { border: 1px solid #ccc; box-shadow: none; padding: 8px; }
+            .kpi-card-title { font-size: 7pt; margin-bottom: 4px; }
             .kpi-card-value { font-size: 14pt; }
-            .kpi-card-delta { font-size: 8pt; }
+            .kpi-card-delta { font-size: 8pt; padding-bottom: 2px; }
 
-            .charts-grid {
-                grid-template-columns: 1fr 1fr; /* Força 2 colunas */
-                gap: 20px;
-            }
+            .charts-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
             .chart-container {
                 border: 1px solid #ccc; box-shadow: none;
-                min-height: auto; /* Remove a altura mínima */
-                padding: 15px;
-                page-break-inside: avoid; /* Tenta não quebrar o card entre páginas */
+                min-height: auto; padding: 15px;
+                page-break-inside: avoid;
             }
-            .chart-container h2 { font-size: 12pt; margin-bottom: 10px; }
-            .chart-wrapper { height: 200px; /* Define uma altura fixa para os gráficos na impressão */ }
+            .chart-container h2 { font-size: 11pt; margin-bottom: 10px; }
+            .chart-wrapper { height: 200px; } /* Altura fixa para os gráficos na impressão */
         }
     </style>
 </head>
 <body>
     <div id="loading-message">Carregando Dashboard...</div>
-    
     <div id="dashboard-body" style="display: none;">
         <div id="print-header">
             <h2 id="print-title"></h2>
@@ -201,7 +195,6 @@
             </section>
         </main>
     </div>
-    
     <script defer src="script.js"></script>
 </body>
 </html>
