@@ -1,44 +1,54 @@
-// =================================================================================
-// ÁREA DE CONFIGURAÇÃO PRINCIPAL - AJUSTE AQUI SE OS NOMES DAS SUAS COLUNAS MUDAREM
-// =================================================================================
-// Escreva EXATAMENTE como está no cabeçalho da sua planilha.
-const MAPEAMENTO_DE_COLUNAS = {
-    origem: 'Onde nos encontrou?',
-    qualificado: 'Qualificado',
-    vendaFechada: 'Venda fechada?',
-    valor: 'Valor do pedido',
-    segmento: 'Seguimento',
-    delegado: 'Delegado para',
-    rd_crm: 'RD CRM' // Adicionado para o gráfico CRM vs. Outros
-};
-// =================================================================================
-
-
 // --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
 let charts = {};
 
-// --- FUNÇÃO PRINCIPAL PARA BUSCAR DADOS ---
+// --- FUNÇÃO PRINCIPAL PARA BUSCAR E PROCESSAR DADOS ---
 async function fetchData() {
     try {
         const response = await fetch('/api/getData');
         if (!response.ok) throw new Error(`Erro do servidor: ${response.statusText}`);
         const result = await response.json();
         
-        // Processa os dados brutos, agora entendendo a estrutura específica da sua planilha
-        let processedData = [];
+        const processedData = [];
         result.data.forEach(sheet => {
             if (sheet.values && sheet.values.length > 1) {
                 const sheetName = sheet.range.split('!')[0].replace(/'/g, '');
                 const headers = sheet.values[0];
                 const sheetRows = sheet.values.slice(1);
                 
+                const colIndex = {
+                    origem: headers.indexOf('Onde nos encontrou?'),
+                    qualificado: headers.indexOf('Qualificado'),
+                    vendaFechada: headers.indexOf('Venda fechada?'),
+                    valor: headers.indexOf('Valor do pedido'),
+                    segmento: headers.indexOf('Seguimento'),
+                    delegado: headers.indexOf('Delegado para'),
+                    rd_crm: headers.indexOf('RD CRM')
+                };
+
                 const rows = sheetRows.map(row => {
-                    let leadData = { mes: sheetName };
-                    headers.forEach((header, i) => {
-                        leadData[header] = row[i];
-                    });
-                    return leadData;
+                    let status = 'Em Negociação';
+                    if (row[colIndex.vendaFechada]?.toUpperCase() === 'SIM') {
+                        status = 'Venda Fechada';
+                    } else if (row[colIndex.qualificado]?.toUpperCase() === 'SIM') {
+                        status = 'Qualificado';
+                    } else if (row[colIndex.qualificado]?.toUpperCase() === 'NÃO') {
+                        status = 'Desqualificado';
+                    }
+
+                    // Limpa o valor do faturamento
+                    const valorStr = row[colIndex.valor] || '0';
+                    const valorNum = parseFloat(valorStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+
+                    return {
+                        mes: sheetName,
+                        origem: row[colIndex.origem],
+                        status: status,
+                        valor: valorNum,
+                        segmento: row[colIndex.segmento],
+                        delegado: row[colIndex.delegado],
+                        rd_crm: row[colIndex.rd_crm]
+                    };
                 });
                 processedData.push(...rows);
             }
@@ -61,7 +71,7 @@ async function fetchData() {
 function initializeDashboard() {
     const mesFilter = document.getElementById('mes-filter');
     const meses = [...new Set(fullData.map(lead => lead.mes))];
-    meses.forEach(mes => {
+    meses.sort().forEach(mes => {
         mesFilter.innerHTML += `<option value="${mes}">${mes}</option>`;
     });
     
@@ -77,32 +87,17 @@ function updateDashboard() {
         ? fullData 
         : fullData.filter(lead => lead.mes === selectedMonth);
 
-    const monthTitle = selectedMonth === 'todos' ? '' : ` - ${selectedMonth}`;
-    document.getElementById('origem-title').innerText = `Origem dos Leads${monthTitle}`;
-    document.getElementById('segmento-title').innerText = `Análise por Segmento${monthTitle}`;
-    document.getElementById('crm-title').innerText = `CRM vs. Outros${monthTitle}`;
-    document.getElementById('delegados-title').innerText = `Distribuição de Leads Delegados${monthTitle}`;
-
-    // Lógica para derivar o Status a partir de várias colunas
-    filteredData.forEach(lead => {
-        if (lead[MAPEAMENTO_DE_COLUNAS.vendaFechada]?.toUpperCase() === 'SIM') {
-            lead.statusCalculado = 'Venda Fechada';
-        } else if (lead[MAPEAMENTO_DE_COLUNAS.qualificado]?.toUpperCase() === 'SIM') {
-            lead.statusCalculado = 'Qualificado';
-        } else if (lead[MAPEAMENTO_DE_COLUNAS.qualificado]?.toUpperCase() === 'NÃO') {
-            lead.statusCalculado = 'Desqualificado';
-        } else {
-            lead.statusCalculado = 'Em Negociação';
-        }
-    });
+    const monthTitle = selectedMonth === 'todos' ? 'Geral' : selectedMonth;
+    document.getElementById('origem-title').innerText = `Origem dos Leads - ${monthTitle}`;
+    document.getElementById('segmento-title').innerText = `Análise por Segmento - ${monthTitle}`;
+    document.getElementById('crm-title').innerText = `CRM vs. Outros - ${monthTitle}`;
+    document.getElementById('delegados-title').innerText = `Distribuição por Responsável - ${monthTitle}`;
 
     const totalLeads = filteredData.length;
-    const leadsQualificados = filteredData.filter(l => l.statusCalculado === 'Qualificado').length;
-    const vendasFechadas = filteredData.filter(l => l.statusCalculado === 'Venda Fechada').length;
-    const leadsDesqualificados = filteredData.filter(l => l.statusCalculado === 'Desqualificado').length;
-    const faturamento = filteredData
-        .filter(l => l.statusCalculado === 'Venda Fechada' && l[MAPEAMENTO_DE_COLUNAS.valor])
-        .reduce((sum, l) => sum + parseFloat(String(l[MAPEAMENTO_DE_COLUNAS.valor]).replace('R$', '').replace(/\./g, '').replace(',', '.').trim()), 0);
+    const leadsQualificados = filteredData.filter(l => l.status === 'Qualificado').length;
+    const vendasFechadas = filteredData.filter(l => l.status === 'Venda Fechada').length;
+    const leadsDesqualificados = filteredData.filter(l => l.status === 'Desqualificado').length;
+    const faturamento = filteredData.reduce((sum, l) => l.status === 'Venda Fechada' ? sum + l.valor : sum, 0);
 
     document.getElementById('kpi-total-leads').innerText = totalLeads;
     document.getElementById('kpi-leads-qualificados').innerText = leadsQualificados;
@@ -116,10 +111,10 @@ function updateDashboard() {
     document.getElementById('delta-leads-desqualificados').innerText = '--%';
     document.getElementById('delta-faturamento').innerText = '--%';
 
-    updateChartData(charts.origem, filteredData, MAPEAMENTO_DE_COLUNAS.origem);
-    updateChartData(charts.segmento, filteredData, MAPEAMENTO_DE_COLUNAS.segmento);
-    updateChartData(charts.crm, filteredData, MAPEAMENTO_DE_COLUNAS.rd_crm);
-    updateChartData(charts.delegados, filteredData, MAPEAMENTO_DE_COLUNAS.delegado);
+    updateChartData(charts.origem, filteredData, 'origem');
+    updateChartData(charts.segmento, filteredData, 'segmento');
+    updateChartData(charts.crm, filteredData, 'rd_crm');
+    updateChartData(charts.delegados, filteredData, 'delegado');
 }
 
 // --- FUNÇÕES DOS GRÁFICOS (CHART.JS) ---
@@ -160,12 +155,12 @@ function updateChartData(chart, data, property) {
         return acc;
     }, {});
 
-    // A lógica do gráfico 'CRM vs. Outros' já usa a propriedade correta, não precisa de IF especial
     chart.data.labels = Object.keys(counts);
-    chart.data.datasets[0].data = Object.values(counts);
-    
-    chart.data.datasets[0].backgroundColor = [ '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ];
-    chart.data.datasets[0].borderColor = '#1F2937';
+    chart.data.datasets = [{
+        data: Object.values(counts),
+        backgroundColor: [ '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ],
+        borderColor: '#1F2937',
+    }];
     chart.update();
 }
 
