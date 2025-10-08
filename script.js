@@ -24,8 +24,9 @@ async function fetchData() {
                     vendaFechada: headers.indexOf('Venda fechada?'),
                     valor: headers.indexOf('Valor do pedido'),
                     segmento: headers.indexOf('Seguimento'),
-                    delegado: headers.indexOf('Delegado para'),
-                    rd_crm: headers.indexOf('RD CRM')
+                    delegado: headers.indexOf('Delegado para'), // Coluna K
+                    rd_crm: headers.indexOf('RD CRM'),
+                    motivoNao: headers.indexOf('Motivo caso (NÂO)') // Coluna J
                 };
 
                 const rows = sheetRows.map(row => {
@@ -42,7 +43,8 @@ async function fetchData() {
                         valor: valorNum,
                         segmento: row[colIndex.segmento],
                         delegado: row[colIndex.delegado],
-                        rd_crm: row[colIndex.rd_crm]
+                        rd_crm: row[colIndex.rd_crm],
+                        motivoNao: row[colIndex.motivoNao]
                     };
                 }).filter(r => r.origem || r.segmento);
                 processedData.push(...rows);
@@ -109,11 +111,18 @@ function updateDashboard() {
     document.getElementById('origem-title').innerText = `Origem dos Leads - ${monthTitle}`;
     document.getElementById('segmento-title').innerText = `Análise por Segmento - ${monthTitle}`;
     document.getElementById('crm-title').innerText = `CRM vs. Outros - ${monthTitle}`;
-    document.getElementById('delegados-title').innerText = `Distribuição por Responsável - ${monthTitle}`;
+    // MUDANÇA AQUI: Título do gráfico atualizado
+    document.getElementById('delegados-title').innerText = `Vendedor Delegado - ${monthTitle}`;
+    document.getElementById('motivos-title').innerText = `Top 5 Motivos de Perda - ${monthTitle}`;
+    
     updateChartData(charts.origem, currentData, 'origem');
     updateChartData(charts.segmento, currentData, 'segmento');
     updateChartData(charts.crm, currentData, 'rd_crm');
+    // MUDANÇA AQUI: Passando a propriedade correta
     updateChartData(charts.delegados, currentData, 'delegado');
+
+    // MUDANÇA AQUI: Chamando a função para renderizar o novo card
+    renderTopMotivos(currentData);
 }
 
 function calculateKPIs(data) {
@@ -159,7 +168,6 @@ function updateDelta(elementId, current, previous, invertColors = false) {
 
 function createCharts() {
     charts.origem = createChart('grafico-origem', 'doughnut');
-    // MUDANÇA AQUI: Corrigido o erro de digitação
     charts.segmento = createChart('grafico-segmento', 'bar');
     charts.crm = createChart('grafico-crm', 'pie');
     charts.delegados = createChart('grafico-delegados', 'bar');
@@ -227,6 +235,38 @@ function updateChartData(chart, data, property) {
         backgroundColor: [ '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ],
     }];
     chart.update();
+}
+
+// NOVA FUNÇÃO para renderizar o card de Top 5 Motivos
+function renderTopMotivos(data) {
+    const container = document.getElementById('top-motivos-container');
+    container.innerHTML = ''; // Limpa o conteúdo anterior
+
+    // Filtra apenas leads que são 'Desqualificado' e têm um motivo preenchido
+    const motivos = data
+        .filter(lead => lead.status === 'Desqualificado' && lead.motivoNao)
+        .reduce((acc, lead) => {
+            const motivo = lead.motivoNao.trim();
+            acc[motivo] = (acc[motivo] || 0) + 1;
+            return acc;
+        }, {});
+
+    const topMotivos = Object.entries(motivos)
+        .sort(([,a],[,b]) => b - a)
+        .slice(0, 5);
+
+    if (topMotivos.length === 0) {
+        container.innerHTML = '<p style="color: var(--cor-texto-secundario); padding-top: 20px; text-align: center;">Nenhum motivo de perda registrado para este período.</p>';
+        return;
+    }
+
+    const list = document.createElement('ol');
+    topMotivos.forEach(([motivo, count]) => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `${motivo} <span style="float: right; font-weight: bold;">${count}</span>`;
+        list.appendChild(listItem);
+    });
+    container.appendChild(list);
 }
 
 fetchData();
