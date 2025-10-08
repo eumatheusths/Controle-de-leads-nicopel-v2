@@ -77,37 +77,48 @@
             .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
         }
 
-        /* --- MUDANÇAS AQUI: ESTILOS DE IMPRESSÃO OTIMIZADOS --- */
+        /* --- MUDANÇAS AQUI: CSS DE IMPRESSÃO ULTRA-COMPACTO --- */
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4 landscape; margin: 15mm; } /* Força o modo paisagem e define margens */
+
             body {
                 background-color: #fff !important; color: #000 !important;
-                padding: 20px; font-size: 9pt;
+                padding: 0; font-size: 8pt;
             }
             .header, #print-button, #theme-toggle, #loading-message { display: none; }
-            #print-header {
-                display: block; margin-bottom: 1.5rem;
-                border-bottom: 2px solid #666; padding-bottom: 1rem;
-            }
-            #print-header h2 { font-size: 16pt; color: #000; text-align: left; }
-            #print-header p { font-size: 10pt; margin: 4px 0; color: #333; }
             
-            .kpi-grid {
-                grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px;
+            #print-header {
+                display: block; margin-bottom: 1rem;
+                border-bottom: 1px solid #999; padding-bottom: 0.5rem;
             }
-            .kpi-card { border: 1px solid #ccc; box-shadow: none; padding: 8px; }
-            .kpi-card-title { font-size: 7pt; margin-bottom: 4px; }
-            .kpi-card-value { font-size: 14pt; }
-            .kpi-card-delta { font-size: 8pt; padding-bottom: 2px; }
+            #print-header h2 { font-size: 14pt; color: #000; text-align: left; }
+            #print-header p { font-size: 9pt; margin: 2px 0; color: #333; }
+            
+            main { display: flex; flex-direction: column; gap: 1rem; }
 
-            .charts-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+            .kpi-grid {
+                display: flex; flex-wrap: nowrap; gap: 10px; margin-bottom: 0;
+            }
+            .kpi-card {
+                border: 1px solid #ccc; box-shadow: none; padding: 5px; flex: 1;
+            }
+            .kpi-card-title { font-size: 7pt; margin-bottom: 2px; }
+            .kpi-card-value { font-size: 12pt; }
+            .kpi-card-delta { font-size: 7pt; }
+
+            .charts-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr; /* Força 3 colunas */
+                gap: 15px;
+            }
             .chart-container {
                 border: 1px solid #ccc; box-shadow: none;
-                min-height: auto; padding: 15px;
+                min-height: auto; padding: 10px;
                 page-break-inside: avoid;
             }
-            .chart-container h2 { font-size: 11pt; margin-bottom: 10px; }
-            .chart-wrapper { height: 200px; } /* Altura fixa para os gráficos na impressão */
+            .chart-container h2 { font-size: 10pt; margin-bottom: 5px; }
+            .chart-wrapper { height: 160px; } /* Altura super reduzida */
         }
     </style>
 </head>
@@ -195,6 +206,7 @@
             </section>
         </main>
     </div>
+    
     <script defer src="script.js"></script>
 </body>
 </html>
