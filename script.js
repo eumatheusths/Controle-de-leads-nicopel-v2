@@ -1,15 +1,16 @@
 // --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
 let charts = {};
+let mesesOrdenados = [];
 
-// --- FUNÇÃO PRINCIPAL PARA BUSCAR E PROCESSAR DADOS ---
+// --- FUNÇÃO PRINCIPAL ---
 async function fetchData() {
     try {
         const response = await fetch('/api/getData');
         if (!response.ok) throw new Error(`Erro do servidor: ${response.statusText}`);
         const result = await response.json();
         
-        const processedData = [];
+        let processedData = [];
         result.data.forEach(sheet => {
             if (sheet.values && sheet.values.length > 1) {
                 const sheetName = sheet.range.split('!')[0].replace(/'/g, '');
@@ -28,15 +29,10 @@ async function fetchData() {
 
                 const rows = sheetRows.map(row => {
                     let status = 'Em Negociação';
-                    if (row[colIndex.vendaFechada]?.toUpperCase() === 'SIM') {
-                        status = 'Venda Fechada';
-                    } else if (row[colIndex.qualificado]?.toUpperCase() === 'SIM') {
-                        status = 'Qualificado';
-                    } else if (row[colIndex.qualificado]?.toUpperCase() === 'NÃO') {
-                        status = 'Desqualificado';
-                    }
+                    if (row[colIndex.vendaFechada]?.toUpperCase() === 'SIM') status = 'Venda Fechada';
+                    else if (row[colIndex.qualificado]?.toUpperCase() === 'SIM') status = 'Qualificado';
+                    else if (row[colIndex.qualificado]?.toUpperCase() === 'NÃO') status = 'Desqualificado';
 
-                    // Limpa o valor do faturamento
                     const valorStr = row[colIndex.valor] || '0';
                     const valorNum = parseFloat(valorStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
 
@@ -67,57 +63,105 @@ async function fetchData() {
     }
 }
 
-// --- FUNÇÃO PARA INICIAR E ATUALIZAR O DASHBOARD ---
 function initializeDashboard() {
     const mesFilter = document.getElementById('mes-filter');
-    const meses = [...new Set(fullData.map(lead => lead.mes))];
-    meses.sort().forEach(mes => {
+    mesesOrdenados = [...new Set(fullData.map(lead => lead.mes))].sort(); // Guarda os meses em ordem
+    mesesOrdenados.forEach(mes => {
         mesFilter.innerHTML += `<option value="${mes}">${mes}</option>`;
     });
     
     createCharts();
     updateDashboard();
+    
     mesFilter.addEventListener('change', updateDashboard);
+    document.getElementById('print-button').addEventListener('click', () => window.print());
 }
 
+// --- LÓGICA DE ATUALIZAÇÃO ---
 function updateDashboard() {
     const mesFilter = document.getElementById('mes-filter');
     const selectedMonth = mesFilter.value;
-    const filteredData = (selectedMonth === 'todos') 
-        ? fullData 
-        : fullData.filter(lead => lead.mes === selectedMonth);
+    
+    // Filtra dados para o mês atual
+    const currentData = (selectedMonth === 'todos') ? fullData : fullData.filter(lead => lead.mes === selectedMonth);
 
+    // Encontra o mês anterior para comparação
+    const previousMonthIndex = mesesOrdenados.indexOf(selectedMonth) - 1;
+    const previousMonth = (previousMonthIndex >= 0) ? mesesOrdenados[previousMonthIndex] : null;
+    const previousData = previousMonth ? fullData.filter(lead => lead.mes === previousMonth) : [];
+
+    // Calcula KPIs para o período atual e anterior
+    const currentKPIs = calculateKPIs(currentData);
+    const previousKPIs = calculateKPIs(previousData);
+
+    // Exibe os KPIs e os deltas
+    displayKPIs(currentKPIs, previousKPIs);
+
+    // Atualiza os títulos e gráficos
     const monthTitle = selectedMonth === 'todos' ? 'Geral' : selectedMonth;
     document.getElementById('origem-title').innerText = `Origem dos Leads - ${monthTitle}`;
     document.getElementById('segmento-title').innerText = `Análise por Segmento - ${monthTitle}`;
     document.getElementById('crm-title').innerText = `CRM vs. Outros - ${monthTitle}`;
     document.getElementById('delegados-title').innerText = `Distribuição por Responsável - ${monthTitle}`;
-
-    const totalLeads = filteredData.length;
-    const leadsQualificados = filteredData.filter(l => l.status === 'Qualificado').length;
-    const vendasFechadas = filteredData.filter(l => l.status === 'Venda Fechada').length;
-    const leadsDesqualificados = filteredData.filter(l => l.status === 'Desqualificado').length;
-    const faturamento = filteredData.reduce((sum, l) => l.status === 'Venda Fechada' ? sum + l.valor : sum, 0);
-
-    document.getElementById('kpi-total-leads').innerText = totalLeads;
-    document.getElementById('kpi-leads-qualificados').innerText = leadsQualificados;
-    document.getElementById('kpi-vendas-fechadas').innerText = vendasFechadas;
-    document.getElementById('kpi-leads-desqualificados').innerText = leadsDesqualificados;
-    document.getElementById('kpi-faturamento').innerText = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    document.getElementById('delta-total-leads').innerText = '--%';
-    document.getElementById('delta-leads-qualificados').innerText = '--%';
-    document.getElementById('delta-vendas-fechadas').innerText = '--%';
-    document.getElementById('delta-leads-desqualificados').innerText = '--%';
-    document.getElementById('delta-faturamento').innerText = '--%';
-
-    updateChartData(charts.origem, filteredData, 'origem');
-    updateChartData(charts.segmento, filteredData, 'segmento');
-    updateChartData(charts.crm, filteredData, 'rd_crm');
-    updateChartData(charts.delegados, filteredData, 'delegado');
+    updateChartData(charts.origem, currentData, 'origem');
+    updateChartData(charts.segmento, currentData, 'segmento');
+    updateChartData(charts.crm, currentData, 'rd_crm');
+    updateChartData(charts.delegados, currentData, 'delegado');
 }
 
-// --- FUNÇÕES DOS GRÁFICOS (CHART.JS) ---
+// --- FUNÇÕES DE CÁLCULO E EXIBIÇÃO ---
+function calculateKPIs(data) {
+    if (!data || data.length === 0) {
+        return { total: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
+    }
+    const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
+    return {
+        total: data.length,
+        qualificados: data.filter(l => l.status === 'Qualificado').length,
+        vendas: vendasFechadas.length,
+        desqualificados: data.filter(l => l.status === 'Desqualificado').length,
+        faturamento: vendasFechadas.reduce((sum, l) => sum + l.valor, 0)
+    };
+}
+
+function displayKPIs(current, previous) {
+    document.getElementById('kpi-total-leads').innerText = current.total;
+    document.getElementById('kpi-leads-qualificados').innerText = current.qualificados;
+    document.getElementById('kpi-vendas-fechadas').innerText = current.vendas;
+    document.getElementById('kpi-leads-desqualificados').innerText = current.desqualificados;
+    document.getElementById('kpi-faturamento').innerText = current.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
+    // Calcula e exibe os deltas
+    updateDelta('delta-total-leads', current.total, previous.total);
+    updateDelta('delta-leads-qualificados', current.qualificados, previous.qualificados);
+    updateDelta('delta-vendas-fechadas', current.vendas, previous.vendas);
+    updateDelta('delta-leads-desqualificados', current.desqualificados, previous.desqualificados, true); // Inverte a lógica para desqualificados
+    updateDelta('delta-faturamento', current.faturamento, previous.faturamento);
+}
+
+function updateDelta(elementId, current, previous, invertColors = false) {
+    const element = document.getElementById(elementId);
+    if (previous === 0) {
+        element.innerHTML = '<span>--%</span>';
+        element.className = 'kpi-card-delta';
+        return;
+    }
+    
+    const delta = ((current - previous) / previous) * 100;
+    const isPositive = delta >= 0;
+    
+    element.innerHTML = `<span>${isPositive ? '▲' : '▼'}</span> ${Math.abs(delta).toFixed(1)}%`;
+    
+    // Lógica de cores: verde se for bom, vermelho se for ruim
+    let isGood = isPositive;
+    if (invertColors) isGood = !isPositive; // Para "desqualificados", menos é melhor
+
+    element.className = 'kpi-card-delta'; // Limpa classes antigas
+    element.classList.add(isGood ? 'positive' : 'negative');
+}
+
+// --- FUNÇÕES DOS GRÁFICOS ---
 function createCharts() {
     const textColor = '#9CA3AF';
     Chart.defaults.color = textColor;
@@ -135,10 +179,7 @@ function createChart(canvasId, type, textColor) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: type.includes('pie') || type.includes('doughnut') ? 'right' : 'none',
-                    labels: { color: textColor }
-                }
+                legend: { position: type.includes('pie') || type.includes('doughnut') ? 'right' : 'none', labels: { color: textColor } }
             },
             scales: type === 'bar' ? {
                 y: { ticks: { color: textColor }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
