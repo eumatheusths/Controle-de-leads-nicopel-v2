@@ -99,4 +99,90 @@
             body { background-color: #fff; color: #000; padding: 1rem; }
             .header, #print-button { display: none; }
             .kpi-card, .chart-container { border: 1px solid #ccc; box-shadow: none; }
-            :root { --cor-fundo: #fff; --cor-card: #fff; --cor-borda: #
+            :root { --cor-fundo: #fff; --cor-card: #fff; --cor-borda: #ddd; --cor-texto-principal: #000; --cor-texto-secundario: #444; }
+            canvas { max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-message">Carregando Dashboard...</div>
+    
+    <div id="dashboard-body" style="display: none;">
+        <header class="header">
+            <div>
+                <h1>Dashboard de Análise de Leads
+                    <span>Análise de performance de vendas e canais de aquisição.</span>
+                </h1>
+            </div>
+            <div class="actions-container">
+                <div class="filter-container">
+                    <label for="mes-filter">Selecione o Mês:</label>
+                    <select id="mes-filter"><option value="todos">Todos</option></select>
+                </div>
+                <button id="print-button"><i class="bi bi-printer"></i> Imprimir</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Total de Leads</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-total-leads">--</p>
+                        <p class="kpi-card-delta" id="delta-total-leads"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Leads Qualificados</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-qualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-qualificados"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Vendas Fechadas</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-vendas-fechadas">--</p>
+                        <p class="kpi-card-delta" id="delta-vendas-fechadas"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Leads Desqualificados</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-desqualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-desqualificados"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Faturamento Total</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-faturamento">R$ --</p>
+                         <p class="kpi-card-delta" id="delta-faturamento"></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="charts-grid">
+                <div class="chart-container">
+                    <h2 id="origem-title">Origem dos Leads</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-origem"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="segmento-title">Análise por Segmento</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-segmento"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="crm-title">CRM vs. Outros</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-crm"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="delegados-title">Distribuição de Leads Delegados</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-delegados"></canvas></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script defer src="script.js"></script>
+</body>
+</html>
