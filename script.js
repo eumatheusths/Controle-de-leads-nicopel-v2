@@ -1,6 +1,4 @@
 // --- CONFIGURAÇÕES E MAPEAMENTO DE COLUNAS ---
-// Se suas colunas estiverem em posições diferentes, ajuste os números aqui.
-// A=0, B=1, C=2, etc.
 const COLUMNS = {
     ORIGEM: 1,      // Coluna B
     STATUS: 4,      // Coluna E
@@ -11,7 +9,7 @@ const COLUMNS = {
 
 // --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
-let charts = {}; // Objeto para armazenar as instâncias dos gráficos
+let charts = {};
 
 // --- FUNÇÃO PRINCIPAL PARA BUSCAR DADOS ---
 async function fetchData() {
@@ -20,12 +18,11 @@ async function fetchData() {
         if (!response.ok) throw new Error(`Erro do servidor: ${response.statusText}`);
         const result = await response.json();
         
-        // Processa os dados brutos para um formato mais fácil de usar
         let processedData = [];
         result.data.forEach((sheet, index) => {
-            const sheetName = sheet.range.split('!')[0].replace(/'/g, ''); // Pega o nome da aba
             if (sheet.values && sheet.values.length > 1) {
-                const headers = sheet.values[0]; // Pega a primeira linha como cabeçalho
+                const sheetName = sheet.range.split('!')[0].replace(/'/g, '');
+                const headers = sheet.values[0];
                 const sheetRows = sheet.values.slice(1).map(row => {
                     let lead = { mes: sheetName };
                     headers.forEach((header, i) => {
@@ -39,11 +36,9 @@ async function fetchData() {
         
         fullData = processedData;
         
-        // Esconde a mensagem de loading e mostra o dashboard
         document.getElementById('loading-message').style.display = 'none';
         document.getElementById('dashboard-body').style.display = 'block';
 
-        // Inicia a renderização
         initializeDashboard();
 
     } catch (error) {
@@ -54,20 +49,14 @@ async function fetchData() {
 
 // --- FUNÇÃO PARA INICIAR E ATUALIZAR O DASHBOARD ---
 function initializeDashboard() {
-    // Popula o filtro de mês
     const mesFilter = document.getElementById('mes-filter');
     const meses = [...new Set(fullData.map(lead => lead.mes))];
     meses.forEach(mes => {
         mesFilter.innerHTML += `<option value="${mes}">${mes}</option>`;
     });
     
-    // Cria os gráficos
     createCharts();
-
-    // Renderiza o dashboard com "Todos" os meses selecionados
     updateDashboard();
-
-    // Adiciona o event listener para o filtro de mês
     mesFilter.addEventListener('change', updateDashboard);
 }
 
@@ -78,14 +67,12 @@ function updateDashboard() {
         ? fullData 
         : fullData.filter(lead => lead.mes === selectedMonth);
 
-    // Atualiza os Títulos
     const monthTitle = selectedMonth === 'todos' ? '' : ` - ${selectedMonth}`;
     document.getElementById('origem-title').innerText = `Origem dos Leads${monthTitle}`;
     document.getElementById('segmento-title').innerText = `Análise por Segmento${monthTitle}`;
     document.getElementById('crm-title').innerText = `CRM vs. Outros${monthTitle}`;
     document.getElementById('delegados-title').innerText = `Distribuição de Leads Delegados${monthTitle}`;
 
-    // Calcula e exibe os KPIs
     const totalLeads = filteredData.length;
     const leadsQualificados = filteredData.filter(l => l.status === 'Qualificado').length;
     const vendasFechadas = filteredData.filter(l => l.status === 'Venda Fechada').length;
@@ -99,16 +86,24 @@ function updateDashboard() {
     document.getElementById('kpi-vendas-fechadas').innerText = vendasFechadas;
     document.getElementById('kpi-leads-desqualificados').innerText = leadsDesqualificados;
     document.getElementById('kpi-faturamento').innerText = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
+    // Popula os deltas com valores placeholder
+    document.getElementById('delta-total-leads').innerText = '--%';
+    document.getElementById('delta-leads-qualificados').innerText = '--%';
+    document.getElementById('delta-vendas-fechadas').innerText = '--%';
+    document.getElementById('delta-leads-desqualificados').innerText = '--%';
+    document.getElementById('delta-faturamento').innerText = '--%';
 
-    // Atualiza os dados dos gráficos
-    updateChartData(charts.origem, filteredData, 'onde_encontrou', 'doughnut');
-    updateChartData(charts.segmento, filteredData, 'segmento', 'bar');
-    updateChartData(charts.crm, filteredData, 'origem', 'pie');
-    updateChartData(charts.delegados, filteredData, 'delegado_para', 'bar');
+
+    updateChartData(charts.origem, filteredData, 'onde_encontrou');
+    updateChartData(charts.segmento, filteredData, 'segmento');
+    updateChartData(charts.crm, filteredData, 'onde_encontrou');
+    updateChartData(charts.delegados, filteredData, 'delegado_para');
 }
 
 // --- FUNÇÕES DOS GRÁFICOS (CHART.JS) ---
 function createCharts() {
+    Chart.defaults.color = 'white'; // Cor padrão para textos dos gráficos
     charts.origem = createChart('grafico-origem', 'doughnut');
     charts.segmento = createChart('grafico-segmento', 'bar');
     charts.crm = createChart('grafico-crm', 'pie');
@@ -124,26 +119,31 @@ function createChart(canvasId, type) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: type === 'bar' ? 'none' : 'right',
-                    labels: { color: 'white' }
+                    position: type.includes('pie') || type.includes('doughnut') ? 'right' : 'none',
+                    labels: { color: var(--cor-texto-secundario) }
                 }
             },
             scales: type === 'bar' ? {
-                y: { ticks: { color: 'white' } },
-                x: { ticks: { color: 'white' } }
+                y: { 
+                    ticks: { color: var(--cor-texto-secundario) },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: { 
+                    ticks: { color: var(--cor-texto-secundario) },
+                    grid: { color: 'transparent' }
+                }
             } : {}
         }
     });
 }
 
-function updateChartData(chart, data, property, type) {
+function updateChartData(chart, data, property) {
     const counts = data.reduce((acc, item) => {
         const key = item[property] || 'Não preenchido';
         acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {});
 
-    // Para o gráfico de CRM, agrupa tudo que não é 'RD' em 'Outros'
     if (chart.canvas.id === 'grafico-crm') {
         const crmCounts = { 'RD': 0, 'Outros': 0 };
         for (const key in counts) {
@@ -160,10 +160,8 @@ function updateChartData(chart, data, property, type) {
         chart.data.datasets[0].data = Object.values(counts);
     }
     
-    chart.data.datasets[0].backgroundColor = [
-        '#4F46E5', '#10B981', '#F59E0B', '#EF4444',
-        '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7'
-    ];
+    chart.data.datasets[0].backgroundColor = [ '#4338CA', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#6EE7B7' ];
+    chart.data.datasets[0].borderColor = '#1F2937'; // Cor de fundo do card para dar espaçamento
     chart.update();
 }
 
