@@ -12,7 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // Checa se há um tema salvo no localStorage e aplica a classe antes de a página carregar
         (function() {
             const theme = localStorage.getItem('theme');
             if (theme === 'dark') {
@@ -22,39 +21,23 @@
     </script>
 
     <style>
-        /* --- DEFINIÇÃO DOS TEMAS COM VARIÁVEIS CSS --- */
         :root {
-            /* TEMA CLARO (PADRÃO) */
-            --cor-fundo: #F8FAFC;
-            --cor-card: #FFFFFF;
-            --cor-borda: #E2E8F0;
-            --cor-texto-principal: #1E293B;
-            --cor-texto-secundario: #64748B;
-            --cor-acento: #4F46E5;
-            --cor-acento-hover: #4338CA;
-            --cor-verde: #16A34A;
-            --cor-vermelho: #DC2626;
+            --cor-fundo: #F8FAFC; --cor-card: #FFFFFF; --cor-borda: #E2E8F0;
+            --cor-texto-principal: #1E293B; --cor-texto-secundario: #64748B;
+            --cor-acento: #4F46E5; --cor-acento-hover: #4338CA;
+            --cor-verde: #16A34A; --cor-vermelho: #DC2626;
             --cor-grid-grafico: rgba(0, 0, 0, 0.1);
             --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
-
         html.dark-mode {
-            /* TEMA ESCURO */
-            --cor-fundo: #111827;
-            --cor-card: #1F2937;
-            --cor-borda: #374151;
-            --cor-texto-principal: #F9FAFB;
-            --cor-texto-secundario: #9CA3AF;
+            --cor-fundo: #111827; --cor-card: #1F2937; --cor-borda: #374151;
+            --cor-texto-principal: #F9FAFB; --cor-texto-secundario: #9CA3AF;
             --cor-grid-grafico: rgba(255, 255, 255, 0.1);
         }
-        
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--cor-fundo);
-            color: var(--cor-texto-principal);
-            padding: 2rem;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal);
+            padding: 2rem; transition: background-color 0.3s ease, color 0.3s ease;
         }
         .container, .kpi-card, .chart-container, .actions-container, .filter-container select, #print-button {
              transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -72,41 +55,31 @@
         #print-button { background-color: var(--cor-acento); color: white; border: none; display: inline-flex; align-items: center; gap: 8px; }
         #print-button:hover { background-color: var(--cor-acento-hover); }
         #theme-toggle { font-size: 1rem; }
-
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .kpi-card { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); box-shadow: var(--sombra-card); }
         .kpi-card-title { font-size: 0.9rem; font-weight: 500; color: var(--cor-texto-secundario); margin-bottom: 0.5rem; }
         .kpi-card-main { display: flex; align-items: flex-end; gap: 1rem; }
         .kpi-card-value { font-size: 2.25rem; font-weight: 800; color: var(--cor-texto-principal); line-height: 1; }
         .kpi-card-delta { font-size: 0.9rem; font-weight: 700; padding-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;}
-        .kpi-card-delta.positive { color: var(--cor-verde); }
-        .kpi-card-delta.negative { color: var(--cor-vermelho); }
-
+        .kpi-card-delta.positive { color: var(--cor-verde); } .kpi-card-delta.negative { color: var(--cor-vermelho); }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
-        .chart-container {
-            background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda);
-            box-shadow: var(--sombra-card); min-height: 380px; display: flex; flex-direction: column;
-        }
+        .chart-container { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); box-shadow: var(--sombra-card); min-height: 380px; display: flex; flex-direction: column; }
         .chart-container h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; text-align: left; color: var(--cor-texto-principal); }
         .chart-wrapper { position: relative; flex-grow: 1; }
         #loading-message { text-align: center; font-size: 1.5rem; padding: 4rem; }
         #print-header { display: none; }
-
         @media (max-width: 768px) {
-            body { padding: 1rem; }
-            .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+            body { padding: 1rem; } .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
             .actions-container { flex-direction: column; align-items: stretch; width: 100%; }
             .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
             .kpi-card-value { font-size: 1.8rem; }
         }
-
         @media print {
             body { background-color: #fff; color: #000; padding: 1rem; font-size: 10pt; }
             .header, #print-button, #theme-toggle, #loading-message { display: none; }
             .kpi-grid { grid-template-columns: repeat(5, 1fr); }
             .kpi-card, .chart-container { border: 1px solid #ccc; box-shadow: none; page-break-inside: avoid; }
-            .charts-grid { grid-template-columns: 1fr 1fr; }
-            .chart-container { min-height: 280px; }
+            .charts-grid { grid-template-columns: 1fr 1fr; } .chart-container { min-height: 280px; }
             h1, #print-header h2 { text-align: left; }
             #print-header { display: block; margin-bottom: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 1rem; }
         }
@@ -116,7 +89,6 @@
     <div id="loading-message">Carregando Dashboard...</div>
     
     <div id="dashboard-body" style="display: none;">
-        
         <div id="print-header">
             <h2 id="print-title"></h2>
             <p id="print-subtitle"></p>
@@ -138,7 +110,64 @@
             </div>
         </header>
 
-        <main></main>
+        <main>
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Total de Leads</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-total-leads">--</p>
+                        <p class="kpi-card-delta" id="delta-total-leads"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Leads Qualificados</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-qualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-qualificados"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Vendas Fechadas</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-vendas-fechadas">--</p>
+                        <p class="kpi-card-delta" id="delta-vendas-fechadas"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Leads Desqualificados</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-leads-desqualificados">--</p>
+                        <p class="kpi-card-delta" id="delta-leads-desqualificados"></p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-card-title">Faturamento Total</p>
+                    <div class="kpi-card-main">
+                        <p class="kpi-card-value" id="kpi-faturamento">R$ --</p>
+                         <p class="kpi-card-delta" id="delta-faturamento"></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="charts-grid">
+                <div class="chart-container">
+                    <h2 id="origem-title">Origem dos Leads</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-origem"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="segmento-title">Análise por Segmento</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-segmento"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="crm-title">CRM vs. Outros</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-crm"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h2 id="delegados-title">Distribuição por Responsável</h2>
+                    <div class="chart-wrapper"><canvas id="grafico-delegados"></canvas></div>
+                </div>
+            </section>
+        </main>
     </div>
     
     <script defer src="script.js"></script>
