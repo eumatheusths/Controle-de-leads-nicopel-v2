@@ -159,7 +159,8 @@ function updateDelta(elementId, current, previous, invertColors = false) {
 
 function createCharts() {
     charts.origem = createChart('grafico-origem', 'doughnut');
-    charts.segmento = createChart('graf-segmento', 'bar');
+    // MUDANÇA AQUI: Corrigido o erro de digitação
+    charts.segmento = createChart('grafico-segmento', 'bar');
     charts.crm = createChart('grafico-crm', 'pie');
     charts.delegados = createChart('grafico-delegados', 'bar');
     updateChartTheme();
