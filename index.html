@@ -55,12 +55,22 @@
         #print-button { background-color: var(--cor-acento); color: white; border: none; display: inline-flex; align-items: center; gap: 8px; }
         #print-button:hover { background-color: var(--cor-acento-hover); }
         #theme-toggle { font-size: 1rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .kpi-card { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); box-shadow: var(--sombra-card); }
         .kpi-card-title { font-size: 0.9rem; font-weight: 500; color: var(--cor-texto-secundario); margin-bottom: 0.5rem; white-space: nowrap; }
-        .kpi-card-main { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
-        .kpi-card-value { font-size: 2.25rem; font-weight: 800; color: var(--cor-texto-principal); line-height: 1; }
-        .kpi-card-delta { font-size: 0.9rem; font-weight: 700; padding-bottom: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        
+        /* --- MUDANÇAS AQUI --- */
+        .kpi-card-main { display: flex; align-items: flex-end; justify-content: flex-start; gap: 0.75rem; flex-wrap: nowrap; }
+        .kpi-card-value {
+            font-size: 2.25rem; font-weight: 800; color: var(--cor-texto-principal); line-height: 1;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Evita que valores muito grandes quebrem o layout */
+        }
+        .kpi-card-delta {
+            font-size: 0.9rem; font-weight: 700; padding-bottom: 4px; display: inline-flex;
+            align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0; /* Impede que a porcentagem encolha */
+        }
+        /* --- FIM DAS MUDANÇAS --- */
+
         .kpi-card-delta.positive { color: var(--cor-verde); } .kpi-card-delta.negative { color: var(--cor-vermelho); }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
         .chart-container { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); box-shadow: var(--sombra-card); min-height: 380px; display: flex; flex-direction: column; }
@@ -99,7 +109,7 @@
         </div>
 
         <header class="header">
-            <div>
+             <div>
                 <h1>Dashboard de Análise de Leads
                     <span>Análise de performance de vendas e canais de aquisição.</span>
                 </h1>
