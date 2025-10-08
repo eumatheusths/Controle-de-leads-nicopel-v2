@@ -106,7 +106,7 @@
         .kpi-card-delta {
             font-size: 0.9rem;
             font-weight: 700;
-            padding-bottom: 4px; /* Alinha com a base do número principal */
+            padding-bottom: 4px;
         }
         
         .kpi-card-delta.positive { color: var(--cor-verde); }
@@ -115,6 +115,7 @@
 
         .charts-grid {
             display: grid;
+            /* MUDANÇA AQUI: Colunas com tamanhos iguais */
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
@@ -125,6 +126,7 @@
             border-radius: 12px;
             border: 1px solid var(--cor-borda);
             min-height: 380px;
+            position: relative; /* Adicionado para garantir o tamanho do gráfico */
         }
         
         .chart-container h2 {
@@ -140,18 +142,20 @@
             padding: 4rem;
         }
         
-        /* --- RESPONSIVIDADE --- */
         @media (max-width: 1200px) {
             .kpi-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
         }
 
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .charts-grid { grid-template-columns: 1fr; }
             .kpi-card-value { font-size: 1.8rem; }
         }
         
