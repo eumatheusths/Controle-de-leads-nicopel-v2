@@ -127,7 +127,7 @@ function calculateKPIs(data) {
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        organicos: data.filter(l => l.origem === 'ORGÂNICO').length,
+        organicos: data.filter(l => l.origem && l.origem.toUpperCase() === 'ORGÂNICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
         desqualificados: data.filter(l => l.status === 'Desqualificado').length,
@@ -262,6 +262,8 @@ function renderTopMotivos(data) {
 
 function generateAndPrintReport(data, period) {
     const printArea = document.getElementById('print-area');
+    const totalLeads = data.length;
+    const faturamentoTotal = data.reduce((sum, lead) => sum + lead.valor, 0);
     let tableHTML = `<h1>Relatório de Análise de Leads</h1><p>Dados referentes ao período: ${period}</p><table><thead><tr><th>Origem</th><th>Status</th><th>Segmento</th><th>Responsável</th><th>Valor do Pedido</th></tr></thead><tbody>`;
     if (data.length === 0) {
         tableHTML += `<tr><td colspan="5">Nenhum dado encontrado para este período.</td></tr>`;
@@ -270,7 +272,7 @@ function generateAndPrintReport(data, period) {
             tableHTML += `<tr><td>${lead.origem || ''}</td><td>${lead.status || ''}</td><td>${lead.segmento || ''}</td><td>${lead.delegado || ''}</td><td>${lead.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td></tr>`;
         });
     }
-    tableHTML += `</tbody></table>`;
+    tableHTML += `</tbody><tfoot><tr><td colspan="4"><strong>TOTAL DE LEADS NO PERÍODO:</strong></td><td><strong>${totalLeads}</strong></td></tr><tr><td colspan="4"><strong>FATURAMENTO TOTAL NO PERÍODO:</strong></td><td><strong>${faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></td></tr></tfoot></table>`;
     printArea.innerHTML = tableHTML;
     window.print();
 }
