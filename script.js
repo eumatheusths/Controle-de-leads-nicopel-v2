@@ -92,10 +92,10 @@ function initializeDashboard() {
     });
 
     printButton.addEventListener('click', () => {
-        const selectedMonth = mesFilter.value;
-        const currentData = (selectedMonth === 'todos') ? fullData : fullData.filter(lead => lead.mes === selectedMonth);
-        const selectedMonthText = mesFilter.options[mesFilter.selectedIndex].text;
-        generateAndPrintReport(currentData, selectedMonthText);
+        const mesSelecionado = mesFilter.options[mesFilter.selectedIndex].text;
+        document.getElementById('print-title').innerText = 'Relatório de Análise de Leads';
+        document.getElementById('print-subtitle').innerText = `Dados referentes ao período: ${mesSelecionado}`;
+        window.print();
     });
 }
 
@@ -122,12 +122,19 @@ function updateDashboard() {
     renderTopMotivos(currentData);
 }
 
+// MUDANÇA AQUI: Lógica de normalização de texto
+const normalizeText = (str) => {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+};
+
 function calculateKPIs(data) {
     if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        organicos: data.filter(l => l.origem && l.origem.toUpperCase() === 'ORGÂNICO').length,
+        // Código mais robusto que ignora acentos e maiúsculas/minúsculas
+        organicos: data.filter(l => normalizeText(l.origem) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
         desqualificados: data.filter(l => l.status === 'Desqualificado').length,
