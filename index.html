@@ -74,16 +74,42 @@
         }
         @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
         
+        /* MUDANÇA AQUI: Regra de impressão mais explícita e robusta */
         @media print {
-            body > *:not(#print-area) { display: none; }
-            #print-area { display: block; font-family: 'Inter', sans-serif; }
+            /* Esconde o dashboard visual e a mensagem de loading de forma agressiva */
+            #dashboard-body, #loading-message {
+                display: none !important;
+            }
+            /* Mostra APENAS a área de impressão */
+            #print-area {
+                display: block !important;
+                font-family: 'Inter', sans-serif;
+            }
             #print-area h1 { font-size: 18pt; margin-bottom: 5px; }
             #print-area p { font-size: 11pt; margin-bottom: 20px; color: #333; }
             #print-area h2 { font-size: 14pt; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-            .print-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; page-break-inside: avoid; }
-            .print-card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; }
-            .print-card-title { font-size: 8pt; font-weight: bold; color: #555; }
-            .print-card-value { font-size: 16pt; font-weight: 800; color: #000; }
+            .print-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+                page-break-inside: avoid;
+            }
+            .print-card {
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 10px;
+                text-align: center;
+            }
+            .print-card-title {
+                font-size: 8pt;
+                font-weight: bold;
+                color: #555;
+            }
+            .print-card-value {
+                font-size: 16pt;
+                font-weight: 800;
+                color: #000;
+            }
         }
     </style>
 </head>
