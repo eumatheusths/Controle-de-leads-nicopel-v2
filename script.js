@@ -92,10 +92,10 @@ function initializeDashboard() {
     });
 
     printButton.addEventListener('click', () => {
-        const mesSelecionado = mesFilter.options[mesFilter.selectedIndex].text;
-        document.getElementById('print-title').innerText = 'Relatório de Análise de Leads';
-        document.getElementById('print-subtitle').innerText = `Dados referentes ao período: ${mesSelecionado}`;
-        window.print();
+        const selectedMonth = mesFilter.value;
+        const currentData = (selectedMonth === 'todos') ? fullData : fullData.filter(lead => lead.mes === selectedMonth);
+        const selectedMonthText = mesFilter.options[mesFilter.selectedIndex].text;
+        generateAndPrintReport(currentData, selectedMonthText);
     });
 }
 
@@ -122,18 +122,12 @@ function updateDashboard() {
     renderTopMotivos(currentData);
 }
 
-// MUDANÇA AQUI: Lógica de normalização de texto
-const normalizeText = (str) => {
-    if (!str) return '';
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-};
-
 function calculateKPIs(data) {
     if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
+    const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
     return {
         total: data.length,
-        // Código mais robusto que ignora acentos e maiúsculas/minúsculas
         organicos: data.filter(l => normalizeText(l.origem) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
@@ -269,18 +263,29 @@ function renderTopMotivos(data) {
 
 function generateAndPrintReport(data, period) {
     const printArea = document.getElementById('print-area');
-    const totalLeads = data.length;
-    const faturamentoTotal = data.reduce((sum, lead) => sum + lead.valor, 0);
-    let tableHTML = `<h1>Relatório de Análise de Leads</h1><p>Dados referentes ao período: ${period}</p><table><thead><tr><th>Origem</th><th>Status</th><th>Segmento</th><th>Responsável</th><th>Valor do Pedido</th></tr></thead><tbody>`;
-    if (data.length === 0) {
-        tableHTML += `<tr><td colspan="5">Nenhum dado encontrado para este período.</td></tr>`;
-    } else {
-        data.forEach(lead => {
-            tableHTML += `<tr><td>${lead.origem || ''}</td><td>${lead.status || ''}</td><td>${lead.segmento || ''}</td><td>${lead.delegado || ''}</td><td>${lead.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td></tr>`;
-        });
-    }
-    tableHTML += `</tbody><tfoot><tr><td colspan="4"><strong>TOTAL DE LEADS NO PERÍODO:</strong></td><td><strong>${totalLeads}</strong></td></tr><tr><td colspan="4"><strong>FATURAMENTO TOTAL NO PERÍODO:</strong></td><td><strong>${faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></td></tr></tfoot></table>`;
-    printArea.innerHTML = tableHTML;
+    const kpis = calculateKPIs(data);
+    const createCardGrid = (title, items) => {
+        let gridHTML = `<h2>${title}</h2><div class="print-grid">`;
+        for (const [key, value] of Object.entries(items)) {
+            gridHTML += `<div class="print-card"><div class="print-card-title">${key}</div><div class="print-card-value">${value}</div></div>`;
+        }
+        gridHTML += `</div>`;
+        return gridHTML;
+    };
+    const kpiItems = {
+        'Total de Leads': kpis.total, 'Leads Orgânicos': kpis.organicos, 'Leads Qualificados': kpis.qualificados,
+        'Vendas Fechadas': kpis.vendas, 'Leads Desqualificados': kpis.desqualificados,
+        'Faturamento Total': kpis.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    };
+    const origemCounts = data.reduce((acc, item) => { acc[item.origem || 'N/A'] = (acc[item.origem || 'N/A'] || 0) + 1; return acc; }, {});
+    const segmentoCounts = data.reduce((acc, item) => { acc[item.segmento || 'N/A'] = (acc[item.segmento || 'N/A'] || 0) + 1; return acc; }, {});
+    const delegadoCounts = data.reduce((acc, item) => { acc[item.delegado || 'N/A'] = (acc[item.delegado || 'N/A'] || 0) + 1; return acc; }, {});
+    let reportHTML = `<h1>Relatório de Análise de Leads</h1><p>Dados referentes ao período: ${period}</p>
+        ${createCardGrid('Resumo Geral (KPIs)', kpiItems)}
+        ${createCardGrid('Origem dos Leads', origemCounts)}
+        ${createCardGrid('Análise por Segmento', segmentoCounts)}
+        ${createCardGrid('Distribuição por Responsável', delegadoCounts)}`;
+    printArea.innerHTML = reportHTML;
     window.print();
 }
 
