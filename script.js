@@ -1,8 +1,10 @@
+// --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
 let charts = {};
 let mesesOrdenados = [];
 const ORDEM_DOS_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+// --- FUNÇÃO PRINCIPAL ---
 async function fetchData() {
     try {
         const response = await fetch('/api/getData');
@@ -50,6 +52,7 @@ async function fetchData() {
         });
         
         fullData = processedData;
+        
         document.getElementById('loading-message').style.display = 'none';
         document.getElementById('dashboard-body').style.display = 'block';
         initializeDashboard();
@@ -78,6 +81,7 @@ function initializeDashboard() {
     updateDashboard();
     
     mesFilter.addEventListener('change', updateDashboard);
+    
     themeToggleButton.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
         const isDarkMode = document.documentElement.classList.contains('dark-mode');
@@ -86,6 +90,7 @@ function initializeDashboard() {
         themeIcon.classList.toggle('bi-sun-fill', isDarkMode);
         updateChartTheme();
     });
+
     printButton.addEventListener('click', () => {
         const selectedMonth = mesFilter.value;
         const currentData = (selectedMonth === 'todos') ? fullData : fullData.filter(lead => lead.mes === selectedMonth);
@@ -256,10 +261,13 @@ function renderTopMotivos(data) {
     container.appendChild(list);
 }
 
+// MUDANÇA AQUI: Função de impressão atualizada para incluir o "Top 5 Motivos"
 function generateAndPrintReport(data, period) {
     const printArea = document.getElementById('print-area');
     const kpis = calculateKPIs(data);
+
     const createCardGrid = (title, items) => {
+        if (Object.keys(items).length === 0) return ''; // Não gera a seção se não houver itens
         let gridHTML = `<h2>${title}</h2><div class="print-grid">`;
         for (const [key, value] of Object.entries(items)) {
             gridHTML += `<div class="print-card"><div class="print-card-title">${key}</div><div class="print-card-value">${value}</div></div>`;
@@ -267,19 +275,36 @@ function generateAndPrintReport(data, period) {
         gridHTML += `</div>`;
         return gridHTML;
     };
+
     const kpiItems = {
         'Total de Leads': kpis.total, 'Leads Orgânicos': kpis.organicos, 'Leads Qualificados': kpis.qualificados,
         'Vendas Fechadas': kpis.vendas, 'Leads Desqualificados': kpis.desqualificados,
         'Faturamento Total': kpis.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
+
     const origemCounts = data.reduce((acc, item) => { acc[item.origem || 'N/A'] = (acc[item.origem || 'N/A'] || 0) + 1; return acc; }, {});
     const segmentoCounts = data.reduce((acc, item) => { acc[item.segmento || 'N/A'] = (acc[item.segmento || 'N/A'] || 0) + 1; return acc; }, {});
     const delegadoCounts = data.reduce((acc, item) => { acc[item.delegado || 'N/A'] = (acc[item.delegado || 'N/A'] || 0) + 1; return acc; }, {});
-    let reportHTML = `<h1>Relatório de Análise de Leads</h1><p>Dados referentes ao período: ${period}</p>
+    
+    // Calcula os Top 5 Motivos
+    const motivos = data.filter(lead => lead.status === 'Desqualificado' && lead.motivoNao).reduce((acc, lead) => {
+        const motivo = lead.motivoNao.trim();
+        acc[motivo] = (acc[motivo] || 0) + 1;
+        return acc;
+    }, {});
+    const topMotivos = Object.entries(motivos).sort(([,a],[,b]) => b - a).slice(0, 5)
+        .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+
+    let reportHTML = `
+        <h1>Relatório de Análise de Leads</h1>
+        <p>Dados referentes ao período: ${period}</p>
         ${createCardGrid('Resumo Geral (KPIs)', kpiItems)}
         ${createCardGrid('Origem dos Leads', origemCounts)}
         ${createCardGrid('Análise por Segmento', segmentoCounts)}
-        ${createCardGrid('Distribuição por Responsável', delegadoCounts)}`;
+        ${createCardGrid('Distribuição por Responsável', delegadoCounts)}
+        ${createCardGrid('Top 5 Motivos de Perda', topMotivos)}
+    `;
+    
     printArea.innerHTML = reportHTML;
     window.print();
 }
