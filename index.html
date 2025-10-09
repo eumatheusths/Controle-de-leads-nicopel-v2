@@ -39,9 +39,6 @@
             font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal);
             padding: 2rem; transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .container, .kpi-card, .chart-container, .actions-container, .filter-container select, #print-button {
-             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .header h1 { font-size: 1.8rem; font-weight: 800; color: var(--cor-texto-principal); }
         .header h1 span { font-weight: 400; color: var(--cor-texto-secundario); font-size: 1rem; display: block; margin-top: 4px; }
@@ -67,11 +64,11 @@
         .chart-container h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; text-align: left; color: var(--cor-texto-principal); }
         .chart-wrapper { position: relative; flex-grow: 1; }
         #loading-message { text-align: center; font-size: 1.5rem; padding: 4rem; }
+        #print-header { display: none; }
         ol { padding-left: 20px; color: var(--cor-texto-principal); }
         ol li { padding: 8px 0; border-bottom: 1px solid var(--cor-borda); }
         ol li:last-child { border-bottom: none; }
-        #print-area { display: none; }
-
+        
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
             body { padding: 1rem; } .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
@@ -81,33 +78,30 @@
         
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            body > *:not(#print-area) { display: none; }
-            #print-area {
-                display: block; font-family: 'Inter', sans-serif;
-            }
-            #print-area h1 { font-size: 18pt; margin-bottom: 5px; }
-            #print-area p { font-size: 11pt; margin-bottom: 20px; color: #333; }
-            #print-area table {
-                width: 100%; border-collapse: collapse; font-size: 8pt;
-            }
-            #print-area th, #print-area td {
-                border: 0.5pt solid #bbb; padding: 4px 6px;
-                text-align: left;
-            }
-            #print-area th { background-color: #f0f0f0 !important; font-weight: bold; }
-            #print-area tbody tr:nth-child(even) { background-color: #f9f9f9 !important; }
-            #print-area tfoot {
-                font-weight: bold; border-top: 2px solid #333;
-            }
-            #print-area tfoot td {
-                background-color: #e8e8e8 !important;
-            }
+            @page { size: A4 landscape; margin: 10mm; }
+            body { background: #fff !important; color: #000 !important; padding: 0; font-size: 8pt; }
+            .header, #print-button, #theme-toggle, #loading-message { display: none; }
+            #print-header { display: block; margin-bottom: 1rem; border-bottom: 1px solid #999; padding-bottom: 0.5rem; }
+            #print-header h2 { font-size: 14pt; } #print-header p { font-size: 9pt; }
+            main { display: flex; flex-direction: column; gap: 1rem; }
+            .kpi-grid { display: flex; flex-wrap: nowrap; gap: 10px; margin-bottom: 0; }
+            .kpi-card { border: 1px solid #ccc; box-shadow: none; padding: 5px; flex: 1; }
+            .kpi-card-title { font-size: 7pt; margin-bottom: 2px; }
+            .kpi-card-value { font-size: 11pt; } .kpi-card-delta { font-size: 7pt; }
+            .charts-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+            .chart-container { border: 1px solid #ccc; box-shadow: none; min-height: auto; padding: 10px; page-break-inside: avoid; }
+            .chart-container h2 { font-size: 9pt; margin-bottom: 5px; }
+            .chart-wrapper { height: 160px; }
         }
     </style>
 </head>
 <body>
     <div id="loading-message">Carregando Dashboard...</div>
     <div id="dashboard-body" style="display: none;">
+        <div id="print-header">
+            <h2 id="print-title"></h2>
+            <p id="print-subtitle"></p>
+        </div>
         <header class="header">
              <div>
                 <h1>Dashboard de Análise de Leads
@@ -141,7 +135,7 @@
             </section>
         </main>
     </div>
-    <div id="print-area"></div>
+    
     <script defer src="script.js"></script>
 </body>
 </html>
