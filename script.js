@@ -1,10 +1,8 @@
-// --- VARIÁVEIS GLOBAIS ---
 let fullData = [];
 let charts = {};
 let mesesOrdenados = [];
 const ORDEM_DOS_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-// --- FUNÇÃO PRINCIPAL ---
 async function fetchData() {
     try {
         const response = await fetch('/api/getData');
@@ -52,7 +50,6 @@ async function fetchData() {
         });
         
         fullData = processedData;
-        
         document.getElementById('loading-message').style.display = 'none';
         document.getElementById('dashboard-body').style.display = 'block';
         initializeDashboard();
@@ -81,7 +78,6 @@ function initializeDashboard() {
     updateDashboard();
     
     mesFilter.addEventListener('change', updateDashboard);
-    
     themeToggleButton.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
         const isDarkMode = document.documentElement.classList.contains('dark-mode');
@@ -90,7 +86,6 @@ function initializeDashboard() {
         themeIcon.classList.toggle('bi-sun-fill', isDarkMode);
         updateChartTheme();
     });
-
     printButton.addEventListener('click', () => {
         const selectedMonth = mesFilter.value;
         const currentData = (selectedMonth === 'todos') ? fullData : fullData.filter(lead => lead.mes === selectedMonth);
