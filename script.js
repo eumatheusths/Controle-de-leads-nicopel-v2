@@ -124,14 +124,13 @@ function updateDashboard() {
     renderTopMotivos(currentData);
 }
 
-// MUDANÇA ESTÁ AQUI
 function calculateKPIs(data) {
     if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
     const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        // Corrigido para usar a propriedade correta (origem_crm) consistentemente com o gráfico
+        // CORREÇÃO AQUI: Usa a propriedade correta 'origem_crm'
         organicos: data.filter(l => normalizeText(l.origem_crm) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
@@ -208,13 +207,11 @@ function createChart(canvasId, type) {
 
 function updateChartData(chart, data, property) {
     if (!chart) return;
-    // Lógica dinâmica para todos os gráficos
     const counts = data.reduce((acc, item) => {
         const key = item[property] || 'Não preenchido';
         acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {});
-
     chart.data.labels = Object.keys(counts);
     chart.data.datasets = [{ data: Object.values(counts), backgroundColor: ['#4F46E5','#10B981','#F59E0B','#EF4444','#3B82F6','#8B5CF6','#EC4899','#6EE7B7'] }];
     chart.update();
