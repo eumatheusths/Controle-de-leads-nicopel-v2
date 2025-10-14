@@ -130,7 +130,8 @@ function calculateKPIs(data) {
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        organicos: data.filter(l => normalizeText(l.origem_geral) === 'ORGANICO').length,
+        // MUDANÇA AQUI: Usa 'origem_crm' para consistência com o gráfico
+        organicos: data.filter(l => normalizeText(l.origem_crm) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
         desqualificados: data.filter(l => l.status === 'Desqualificado').length,
