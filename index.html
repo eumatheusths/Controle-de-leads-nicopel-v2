@@ -8,7 +8,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        (function() { const theme = localStorage.getItem('theme'); if (!theme || theme === 'light') { /* Fica no modo claro */ } else { document.documentElement.classList.add('dark-mode'); } })();
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light'; // Tema claro como padrão
+            if (theme === 'dark') { 
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
     </script>
     <style>
         :root {
@@ -16,30 +21,31 @@
             --cor-texto-principal: #1E293B; --cor-texto-secundario: #64748B;
             --cor-acento: #4F46E5; --cor-acento-hover: #4338CA;
             --cor-verde: #16A34A; --cor-vermelho: #DC2626;
+            --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         html.dark-mode {
             --cor-fundo: #111827; --cor-card: #1F2937; --cor-borda: #374151;
             --cor-texto-principal: #F9FAFB; --cor-texto-secundario: #9CA3AF;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal); padding: 2rem; transition: background-color 0.3s ease; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .header h1 { font-size: 1.8rem; font-weight: 800; }
         .header h1 span { font-weight: 400; color: var(--cor-texto-secundario); font-size: 1rem; display: block; margin-top: 4px; }
         .actions-container { display: flex; align-items: center; gap: 1rem; }
         .filter-container label { font-weight: 500; color: var(--cor-texto-secundario); margin-right: 0.5rem; }
-        select, button { background-color: var(--cor-card); color: var(--cor-texto-principal); border: 1px solid var(--cor-borda); border-radius: 8px; padding: 0.5rem 1rem; font-family: 'Inter', sans-serif; font-weight: 700; transition: background-color 0.3s ease; }
+        select, button { background-color: var(--cor-card); color: var(--cor-texto-principal); border: 1px solid var(--cor-borda); border-radius: 8px; padding: 0.5rem 1rem; font-family: 'Inter', sans-serif; font-weight: 700; }
         button { cursor: pointer; }
         #print-button { background-color: var(--cor-acento); color: white; border: none; display: inline-flex; align-items: center; gap: 8px; }
         #print-button:hover { background-color: var(--cor-acento-hover); }
         #theme-toggle { font-size: 1rem; padding: 0.6rem 1rem; }
         .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
-        .kpi-card { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); }
+        .kpi-card { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); box-shadow: var(--sombra-card); }
         .kpi-card-title { font-size: 0.9rem; font-weight: 500; color: var(--cor-texto-secundario); margin-bottom: 0.5rem; }
         .kpi-card-main { display: flex; align-items: flex-end; justify-content: space-between; }
         .kpi-card-value { font-size: 2.25rem; font-weight: 800; }
         .kpi-card-delta { font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
-        .kpi-card-delta.positive { color: var(--cor-verde); }
-        .kpi-card-delta.negative { color: var(--cor-vermelho); }
+        .kpi-card-delta.positive { color: var(--cor-verde); } .kpi-card-delta.negative { color: var(--cor-vermelho); }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
         .chart-container { background-color: var(--cor-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--cor-borda); min-height: 380px; display: flex; flex-direction: column; }
         .chart-container h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; }
@@ -50,13 +56,52 @@
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { body { padding: 1rem; } .header { flex-direction: column; align-items: flex-start; } }
         @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
-        @media print { /* (Estilos de impressão aqui) */ }
+        @media print {
+            #dashboard-body, #loading-message { display: none !important; }
+            #print-area { display: block !important; font-family: 'Inter', sans-serif; }
+            #print-area h1 { font-size: 18pt; margin-bottom: 5px; } #print-area p { font-size: 11pt; margin-bottom: 20px; color: #333; }
+            #print-area h2 { font-size: 14pt; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+            .print-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; page-break-inside: avoid; }
+            .print-card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; }
+            .print-card-title { font-size: 8pt; font-weight: bold; color: #555; }
+            .print-card-value { font-size: 16pt; font-weight: 800; color: #000; }
+        }
     </style>
 </head>
 <body>
     <div id="loading-message">Carregando Dashboard...</div>
     <div id="dashboard-body" style="display: none;">
-        </div>
+        <header class="header">
+             <div>
+                <h1>Dashboard de Análise de Leads<span>Análise de performance de vendas e canais de aquisição.</span></h1>
+            </div>
+            <div class="actions-container">
+                <div class="filter-container">
+                    <label for="mes-filter">Selecione o Mês:</label>
+                    <select id="mes-filter"><option value="todos">Todos</option></select>
+                </div>
+                <button id="print-button"><i class="bi bi-printer"></i> Imprimir</button>
+                <button id="theme-toggle" title="Alternar tema"><i class="bi bi-moon-stars-fill"></i></button>
+            </div>
+        </header>
+        <main>
+            <section class="kpi-grid">
+                <div class="kpi-card"><p class="kpi-card-title">Total de Leads</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-total-leads">--</p><p class="kpi-card-delta" id="delta-total-leads"></p></div></div>
+                <div class="kpi-card"><p class="kpi-card-title">Leads Orgânicos</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-leads-organicos">--</p><p class="kpi-card-delta" id="delta-leads-organicos"></p></div></div>
+                <div class="kpi-card"><p class="kpi-card-title">Leads Qualificados</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-leads-qualificados">--</p><p class="kpi-card-delta" id="delta-leads-qualificados"></p></div></div>
+                <div class="kpi-card"><p class="kpi-card-title">Vendas Fechadas</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-vendas-fechadas">--</p><p class="kpi-card-delta" id="delta-vendas-fechadas"></p></div></div>
+                <div class="kpi-card"><p class="kpi-card-title">Leads Desqualificados</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-leads-desqualificados">--</p><p class="kpi-card-delta" id="delta-leads-desqualificados"></p></div></div>
+                <div class="kpi-card"><p class="kpi-card-title">Faturamento Total</p><div class="kpi-card-main"><p class="kpi-card-value" id="kpi-faturamento">R$ --</p><p class="kpi-card-delta" id="delta-faturamento"></p></div></div>
+            </section>
+            <section class="charts-grid">
+                <div class="chart-container"><h2 id="origem-title">Origem dos Leads</h2><div class="chart-wrapper"><canvas id="grafico-origem"></canvas></div></div>
+                <div class="chart-container"><h2 id="segmento-title">Análise por Segmento</h2><div class="chart-wrapper"><canvas id="grafico-segmento"></canvas></div></div>
+                <div class="chart-container"><h2 id="crm-title">Análise de Origem (CRM)</h2><div class="chart-wrapper"><canvas id="grafico-crm"></canvas></div></div>
+                <div class="chart-container"><h2 id="delegados-title">Vendedor Delegado</h2><div class="chart-wrapper"><canvas id="grafico-delegados"></canvas></div></div>
+                <div class="chart-container"><h2 id="motivos-title">Top 5 Motivos de Perda</h2><div id="top-motivos-container"></div></div>
+            </section>
+        </main>
+    </div>
     <div id="print-area"></div>
     <script defer src="script.js"></script>
 </body>
