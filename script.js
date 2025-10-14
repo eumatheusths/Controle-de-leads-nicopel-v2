@@ -208,11 +208,13 @@ function createChart(canvasId, type) {
 
 function updateChartData(chart, data, property) {
     if (!chart) return;
+    // Lógica dinâmica para todos os gráficos
     const counts = data.reduce((acc, item) => {
         const key = item[property] || 'Não preenchido';
         acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {});
+
     chart.data.labels = Object.keys(counts);
     chart.data.datasets = [{ data: Object.values(counts), backgroundColor: ['#4F46E5','#10B981','#F59E0B','#EF4444','#3B82F6','#8B5CF6','#EC4899','#6EE7B7'] }];
     chart.update();
