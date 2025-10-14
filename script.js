@@ -96,8 +96,7 @@ function updateDashboard() {
     
     updateChartData(charts.origem, currentData, 'Onde nos encontrou?');
     updateChartData(charts.segmento, currentData, 'Seguimento');
-    // MUDANÇA AQUI: Passando o nome da nova coluna
-    updateChartData(charts.crm, currentData, 'Origem');
+    updateChartData(charts.crm, currentData, 'Origem'); // Usando a nova coluna 'Origem'
     updateChartData(charts.delegados, currentData, 'Delegado para');
     renderTopMotivos(currentData);
 }
@@ -199,20 +198,29 @@ function createChart(canvasId, type) {
     });
 }
 
-// MUDANÇA AQUI: Lógica do gráfico de CRM atualizada
+// MUDANÇA AQUI: Lógica do gráfico de CRM atualizada para incluir "Orgânico"
 function updateChartData(chart, data, property) {
     if (!chart) return;
     let counts;
     if (chart.canvas.id === 'grafico-crm') {
-        counts = { 'RD': 0, 'Outros': 0 };
+        counts = { 'RD': 0, 'Orgânico': 0, 'Outros': 0 };
+        const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
         data.forEach(item => {
-            // A propriedade agora é 'Origem'
-            if (item[property] === 'RD') {
+            const valor = item[property];
+            if (valor === 'RD') {
                 counts['RD']++;
-            } else if (item[property]) { // Garante que não conte linhas com a célula vazia
+            } else if (normalizeText(valor) === 'ORGANICO') {
+                counts['Orgânico']++;
+            } else if (valor) {
                 counts['Outros']++;
             }
         });
+        // Remove categorias com zero para um gráfico mais limpo
+        for (const key in counts) {
+            if (counts[key] === 0) {
+                delete counts[key];
+            }
+        }
     } else {
         counts = data.reduce((acc, item) => {
             const key = item[property] || 'Não preenchido';
