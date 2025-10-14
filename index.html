@@ -3,23 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Análise de Leads - Nicopel</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <title>Dashboard de Análise de Leads</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
         (function() {
             const theme = localStorage.getItem('theme');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark-mode');
-            }
+            if (theme === 'dark') { document.documentElement.classList.add('dark-mode'); }
         })();
     </script>
-
     <style>
         :root {
             --cor-fundo: #F8FAFC; --cor-card: #FFFFFF; --cor-borda: #E2E8F0;
@@ -33,19 +26,13 @@
             --cor-texto-principal: #F9FAFB; --cor-texto-secundario: #9CA3AF;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal);
-            padding: 2rem; transition: background-color 0.3s ease, color 0.3s ease;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal); padding: 2rem; transition: background-color 0.3s ease, color 0.3s ease; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .header h1 { font-size: 1.8rem; font-weight: 800; color: var(--cor-texto-principal); }
         .header h1 span { font-weight: 400; color: var(--cor-texto-secundario); font-size: 1rem; display: block; margin-top: 4px; }
         .actions-container { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .filter-container label { font-weight: 500; color: var(--cor-texto-secundario); margin-right: 0.5rem; }
-        .filter-container select, #print-button, #theme-toggle {
-            background-color: var(--cor-card); color: var(--cor-texto-principal); border: 1px solid var(--cor-borda);
-            border-radius: 8px; padding: 0.5rem 1rem; font-family: 'Inter', sans-serif; font-weight: 700;
-        }
+        .filter-container select, #print-button, #theme-toggle { background-color: var(--cor-card); color: var(--cor-texto-principal); border: 1px solid var(--cor-borda); border-radius: 8px; padding: 0.5rem 1rem; font-family: 'Inter', sans-serif; font-weight: 700; }
         #print-button, #theme-toggle { padding: 0.6rem 1rem; cursor: pointer; }
         #print-button { background-color: var(--cor-acento); color: white; border: none; display: inline-flex; align-items: center; gap: 8px; }
         #print-button:hover { background-color: var(--cor-acento-hover); }
@@ -66,46 +53,18 @@
         ol li { padding: 8px 0; border-bottom: 1px solid var(--cor-borda); }
         ol li:last-child { border-bottom: none; }
         #print-area { display: none; }
-
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 768px) {
-            body { padding: 1rem; } .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-            .actions-container { flex-direction: column; align-items: stretch; width: 100%; }
-        }
+        @media (max-width: 768px) { body { padding: 1rem; } .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; } .actions-container { flex-direction: column; align-items: stretch; width: 100%; } }
         @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
-        
-        /* MUDANÇA AQUI: Restaurado o CSS de impressão correto para o relatório de CARDS */
         @media print {
             #dashboard-body, #loading-message { display: none !important; }
-            #print-area {
-                display: block !important;
-                font-family: 'Inter', sans-serif;
-            }
-            #print-area h1 { font-size: 18pt; margin-bottom: 5px; }
-            #print-area p { font-size: 11pt; margin-bottom: 20px; color: #333; }
+            #print-area { display: block !important; font-family: 'Inter', sans-serif; }
+            #print-area h1 { font-size: 18pt; margin-bottom: 5px; } #print-area p { font-size: 11pt; margin-bottom: 20px; color: #333; }
             #print-area h2 { font-size: 14pt; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-            .print-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 15px;
-                page-break-inside: avoid;
-            }
-            .print-card {
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                padding: 10px;
-                text-align: center;
-            }
-            .print-card-title {
-                font-size: 8pt;
-                font-weight: bold;
-                color: #555;
-            }
-            .print-card-value {
-                font-size: 16pt;
-                font-weight: 800;
-                color: #000;
-            }
+            .print-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; page-break-inside: avoid; }
+            .print-card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; }
+            .print-card-title { font-size: 8pt; font-weight: bold; color: #555; }
+            .print-card-value { font-size: 16pt; font-weight: 800; color: #000; }
         }
     </style>
 </head>
@@ -114,9 +73,7 @@
     <div id="dashboard-body" style="display: none;">
         <header class="header">
              <div>
-                <h1>Dashboard de Análise de Leads
-                    <span>Análise de performance de vendas e canais de aquisição.</span>
-                </h1>
+                <h1>Dashboard de Análise de Leads<span>Análise de performance de vendas e canais de aquisição.</span></h1>
             </div>
             <div class="actions-container">
                 <div class="filter-container">
@@ -139,7 +96,7 @@
             <section class="charts-grid">
                 <div class="chart-container"><h2 id="origem-title">Origem dos Leads</h2><div class="chart-wrapper"><canvas id="grafico-origem"></canvas></div></div>
                 <div class="chart-container"><h2 id="segmento-title">Análise por Segmento</h2><div class="chart-wrapper"><canvas id="grafico-segmento"></canvas></div></div>
-                <div class="chart-container"><h2 id="crm-title">CRM vs. Outros</h2><div class="chart-wrapper"><canvas id="grafico-crm"></canvas></div></div>
+                <div class="chart-container"><h2 id="crm-title">Análise de Origem (CRM)</h2><div class="chart-wrapper"><canvas id="grafico-crm"></canvas></div></div>
                 <div class="chart-container"><h2 id="delegados-title">Vendedor Delegado</h2><div class="chart-wrapper"><canvas id="grafico-delegados"></canvas></div></div>
                 <div class="chart-container"><h2 id="motivos-title">Top 5 Motivos de Perda</h2><div id="top-motivos-container"></div></div>
             </section>
