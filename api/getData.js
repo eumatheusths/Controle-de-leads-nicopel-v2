@@ -6,7 +6,7 @@ export default async function handler(request, response) {
     const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${API_KEY}`;
     const metaResponse = await fetch(metaUrl);
     if (!metaResponse.ok) {
-      throw new Error(`Falha ao buscar metadados da planilha: ${metaResponse.statusText}`);
+      throw new Error(`Falha ao buscar metadados: ${metaResponse.statusText}`);
     }
     const spreadsheetMeta = await metaResponse.json();
     const sheetNames = spreadsheetMeta.sheets.map(sheet => sheet.properties.title);
@@ -22,6 +22,6 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error("Erro no backend:", error);
-    response.status(500).json({ error: 'Falha ao buscar dados da planilha.', details: error.message });
+    response.status(500).json({ error: 'Falha ao buscar dados.', details: error.message });
   }
 }
