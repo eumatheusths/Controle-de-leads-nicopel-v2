@@ -124,13 +124,14 @@ function updateDashboard() {
     renderTopMotivos(currentData);
 }
 
+// MUDANÇA ESTÁ AQUI
 function calculateKPIs(data) {
     if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
     const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        // MUDANÇA AQUI: Usa 'origem_crm' para consistência com o gráfico
+        // Corrigido para usar a propriedade correta (origem_crm) consistentemente com o gráfico
         organicos: data.filter(l => normalizeText(l.origem_crm) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
