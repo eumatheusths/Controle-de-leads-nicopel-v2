@@ -21,7 +21,7 @@ async function fetchData() {
                 const rows = sheetRows.map(row => {
                     let leadData = { mes: sheetName };
                     headers.forEach((header, i) => {
-                        leadData[header] = row[i]; // Usa o nome exato do header como chave
+                        leadData[header] = row[i];
                     });
                     return leadData;
                 });
@@ -96,8 +96,8 @@ function updateDashboard() {
     
     updateChartData(charts.origem, currentData, 'Onde nos encontrou?');
     updateChartData(charts.segmento, currentData, 'Seguimento');
-    // MUDANÇA AQUI: Passando o nome exato da coluna
-    updateChartData(charts.crm, currentData, 'RD CRM');
+    // MUDANÇA AQUI: Passando o nome da nova coluna
+    updateChartData(charts.crm, currentData, 'Origem');
     updateChartData(charts.delegados, currentData, 'Delegado para');
     renderTopMotivos(currentData);
 }
@@ -199,14 +199,19 @@ function createChart(canvasId, type) {
     });
 }
 
+// MUDANÇA AQUI: Lógica do gráfico de CRM atualizada
 function updateChartData(chart, data, property) {
     if (!chart) return;
     let counts;
     if (chart.canvas.id === 'grafico-crm') {
         counts = { 'RD': 0, 'Outros': 0 };
         data.forEach(item => {
-            if (item[property] === 'RD') counts['RD']++;
-            else if (item[property]) counts['Outros']++; // Garante que não conte linhas vazias
+            // A propriedade agora é 'Origem'
+            if (item[property] === 'RD') {
+                counts['RD']++;
+            } else if (item[property]) { // Garante que não conte linhas com a célula vazia
+                counts['Outros']++;
+            }
         });
     } else {
         counts = data.reduce((acc, item) => {
