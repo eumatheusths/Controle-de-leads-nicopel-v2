@@ -18,35 +18,13 @@ async function fetchData() {
                 const headers = sheet.values[0];
                 const sheetRows = sheet.values.slice(1);
                 
-                const colIndex = {
-                    origem: headers.indexOf('Onde nos encontrou?'),
-                    qualificado: headers.indexOf('Qualificado'),
-                    vendaFechada: headers.indexOf('Venda fechada?'),
-                    valor: headers.indexOf('Valor do pedido'),
-                    segmento: headers.indexOf('Seguimento'),
-                    delegado: headers.indexOf('Delegado para'),
-                    rd_crm: headers.indexOf('RD CRM'),
-                    motivoNao: headers.indexOf('Motivo caso (NÂO)')
-                };
-
                 const rows = sheetRows.map(row => {
-                    let status = 'Em Negociação';
-                    if (row[colIndex.vendaFechada]?.toUpperCase() === 'SIM') status = 'Venda Fechada';
-                    else if (row[colIndex.qualificado]?.toUpperCase() === 'SIM') status = 'Qualificado';
-                    else if (row[colIndex.qualificado]?.toUpperCase() === 'NÃO') status = 'Desqualificado';
-                    const valorStr = row[colIndex.valor] || '0';
-                    const valorNum = parseFloat(valorStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
-                    return {
-                        mes: sheetName,
-                        origem: row[colIndex.origem],
-                        status: status,
-                        valor: valorNum,
-                        segmento: row[colIndex.segmento],
-                        delegado: row[colIndex.delegado],
-                        rd_crm: row[colIndex.rd_crm],
-                        motivoNao: row[colIndex.motivoNao]
-                    };
-                }).filter(r => r.origem || r.segmento);
+                    let leadData = { mes: sheetName };
+                    headers.forEach((header, i) => {
+                        leadData[header] = row[i]; // Usa o nome exato do header como chave
+                    });
+                    return leadData;
+                });
                 processedData.push(...rows);
             }
         });
@@ -115,24 +93,30 @@ function updateDashboard() {
     document.getElementById('crm-title').innerText = `CRM vs. Outros - ${monthTitle}`;
     document.getElementById('delegados-title').innerText = `Vendedor Delegado - ${monthTitle}`;
     document.getElementById('motivos-title').innerText = `Top 5 Motivos de Perda - ${monthTitle}`;
-    updateChartData(charts.origem, currentData, 'origem');
-    updateChartData(charts.segmento, currentData, 'segmento');
-    updateChartData(charts.crm, currentData, 'rd_crm');
-    updateChartData(charts.delegados, currentData, 'delegado');
+    
+    updateChartData(charts.origem, currentData, 'Onde nos encontrou?');
+    updateChartData(charts.segmento, currentData, 'Seguimento');
+    // MUDANÇA AQUI: Passando o nome exato da coluna
+    updateChartData(charts.crm, currentData, 'RD CRM');
+    updateChartData(charts.delegados, currentData, 'Delegado para');
     renderTopMotivos(currentData);
 }
 
 function calculateKPIs(data) {
     if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
-    const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
+    const vendasFechadas = data.filter(l => l['Venda fechada?']?.toUpperCase() === 'SIM');
     return {
         total: data.length,
-        organicos: data.filter(l => normalizeText(l.origem) === 'ORGANICO').length,
-        qualificados: data.filter(l => l.status === 'Qualificado').length,
+        organicos: data.filter(l => normalizeText(l['Onde nos encontrou?']) === 'ORGANICO').length,
+        qualificados: data.filter(l => l['Qualificado']?.toUpperCase() === 'SIM').length,
         vendas: vendasFechadas.length,
-        desqualificados: data.filter(l => l.status === 'Desqualificado').length,
-        faturamento: vendasFechadas.reduce((sum, l) => sum + l.valor, 0)
+        desqualificados: data.filter(l => l['Qualificado']?.toUpperCase() === 'NÃO').length,
+        faturamento: vendasFechadas.reduce((sum, l) => {
+            const valorStr = l['Valor do pedido'] || '0';
+            const valorNum = parseFloat(valorStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+            return sum + valorNum;
+        }, 0)
     };
 }
 
@@ -222,7 +206,7 @@ function updateChartData(chart, data, property) {
         counts = { 'RD': 0, 'Outros': 0 };
         data.forEach(item => {
             if (item[property] === 'RD') counts['RD']++;
-            else counts['Outros']++;
+            else if (item[property]) counts['Outros']++; // Garante que não conte linhas vazias
         });
     } else {
         counts = data.reduce((acc, item) => {
@@ -242,8 +226,8 @@ function updateChartData(chart, data, property) {
 function renderTopMotivos(data) {
     const container = document.getElementById('top-motivos-container');
     container.innerHTML = ''; 
-    const motivos = data.filter(lead => lead.status === 'Desqualificado' && lead.motivoNao).reduce((acc, lead) => {
-        const motivo = lead.motivoNao.trim();
+    const motivos = data.filter(lead => lead['Qualificado']?.toUpperCase() === 'NÃO' && lead['Motivo caso (NÂO)']).reduce((acc, lead) => {
+        const motivo = lead['Motivo caso (NÂO)'].trim();
         acc[motivo] = (acc[motivo] || 0) + 1;
         return acc;
     }, {});
@@ -261,13 +245,11 @@ function renderTopMotivos(data) {
     container.appendChild(list);
 }
 
-// MUDANÇA AQUI: Função de impressão atualizada para incluir o "Top 5 Motivos"
 function generateAndPrintReport(data, period) {
     const printArea = document.getElementById('print-area');
     const kpis = calculateKPIs(data);
-
     const createCardGrid = (title, items) => {
-        if (Object.keys(items).length === 0) return ''; // Não gera a seção se não houver itens
+        if (Object.keys(items).length === 0) return '';
         let gridHTML = `<h2>${title}</h2><div class="print-grid">`;
         for (const [key, value] of Object.entries(items)) {
             gridHTML += `<div class="print-card"><div class="print-card-title">${key}</div><div class="print-card-value">${value}</div></div>`;
@@ -275,36 +257,28 @@ function generateAndPrintReport(data, period) {
         gridHTML += `</div>`;
         return gridHTML;
     };
-
     const kpiItems = {
         'Total de Leads': kpis.total, 'Leads Orgânicos': kpis.organicos, 'Leads Qualificados': kpis.qualificados,
         'Vendas Fechadas': kpis.vendas, 'Leads Desqualificados': kpis.desqualificados,
         'Faturamento Total': kpis.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
-
-    const origemCounts = data.reduce((acc, item) => { acc[item.origem || 'N/A'] = (acc[item.origem || 'N/A'] || 0) + 1; return acc; }, {});
-    const segmentoCounts = data.reduce((acc, item) => { acc[item.segmento || 'N/A'] = (acc[item.segmento || 'N/A'] || 0) + 1; return acc; }, {});
-    const delegadoCounts = data.reduce((acc, item) => { acc[item.delegado || 'N/A'] = (acc[item.delegado || 'N/A'] || 0) + 1; return acc; }, {});
-    
-    // Calcula os Top 5 Motivos
-    const motivos = data.filter(lead => lead.status === 'Desqualificado' && lead.motivoNao).reduce((acc, lead) => {
-        const motivo = lead.motivoNao.trim();
+    const origemCounts = data.reduce((acc, item) => { acc[item['Onde nos encontrou?'] || 'N/A'] = (acc[item['Onde nos encontrou?'] || 'N/A'] || 0) + 1; return acc; }, {});
+    const segmentoCounts = data.reduce((acc, item) => { acc[item['Seguimento'] || 'N/A'] = (acc[item['Seguimento'] || 'N/A'] || 0) + 1; return acc; }, {});
+    const delegadoCounts = data.reduce((acc, item) => { acc[item['Delegado para'] || 'N/A'] = (acc[item['Delegado para'] || 'N/A'] || 0) + 1; return acc; }, {});
+    const motivos = data.filter(lead => lead['Qualificado']?.toUpperCase() === 'NÃO' && lead['Motivo caso (NÂO)']).reduce((acc, lead) => {
+        const motivo = lead['Motivo caso (NÂO)'].trim();
         acc[motivo] = (acc[motivo] || 0) + 1;
         return acc;
     }, {});
     const topMotivos = Object.entries(motivos).sort(([,a],[,b]) => b - a).slice(0, 5)
         .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
 
-    let reportHTML = `
-        <h1>Relatório de Análise de Leads</h1>
-        <p>Dados referentes ao período: ${period}</p>
+    let reportHTML = `<h1>Relatório de Análise de Leads</h1><p>Dados referentes ao período: ${period}</p>
         ${createCardGrid('Resumo Geral (KPIs)', kpiItems)}
         ${createCardGrid('Origem dos Leads', origemCounts)}
         ${createCardGrid('Análise por Segmento', segmentoCounts)}
         ${createCardGrid('Distribuição por Responsável', delegadoCounts)}
-        ${createCardGrid('Top 5 Motivos de Perda', topMotivos)}
-    `;
-    
+        ${createCardGrid('Top 5 Motivos de Perda', topMotivos)}`;
     printArea.innerHTML = reportHTML;
     window.print();
 }
