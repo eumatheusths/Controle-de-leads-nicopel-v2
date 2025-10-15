@@ -124,14 +124,28 @@ function updateDashboard() {
     renderTopMotivos(currentData);
 }
 
+/* === atualizado: agora considera colunas C e G (origem_crm e origem_geral) === */
 function calculateKPIs(data) {
-    if (!data) return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
-    const normalizeText = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
+    if (!data) {
+        return { total: 0, organicos: 0, qualificados: 0, vendas: 0, desqualificados: 0, faturamento: 0 };
+    }
+
+    const norm = (str) => str ? str.toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toUpperCase() : '';
+
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
+
+    // conta como "Orgânico" se aparecer em C (origem_crm) OU G (origem_geral)
+    const organicos = data.filter(l =>
+        norm(l.origem_crm) === 'ORGANICO' || norm(l.origem_geral) === 'ORGANICO'
+    ).length;
+
     return {
         total: data.length,
-        // Usa a propriedade correta 'origem_crm'
-        organicos: data.filter(l => normalizeText(l.origem_crm) === 'ORGANICO').length,
+        organicos,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
         desqualificados: data.filter(l => l.status === 'Desqualificado').length,
@@ -141,7 +155,6 @@ function calculateKPIs(data) {
 
 /* ====== ALTERADO: adiciona "Soma do mês" no card Leads Orgânicos ====== */
 function displayKPIs(current, previous) {
-    // valores principais
     document.getElementById('kpi-total-leads').innerText = current.total;
     document.getElementById('kpi-leads-organicos').innerText = current.organicos;
     document.getElementById('kpi-leads-qualificados').innerText = current.qualificados;
@@ -149,7 +162,6 @@ function displayKPIs(current, previous) {
     document.getElementById('kpi-leads-desqualificados').innerText = current.desqualificados;
     document.getElementById('kpi-faturamento').innerText = current.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    // insere a linha "Soma do mês" logo abaixo do número do KPI de orgânicos
     const organicoValue = document.getElementById('kpi-leads-organicos');
     const organicoMain = organicoValue.closest('.kpi-card-main');
     const deltaOrganicos = document.getElementById('delta-leads-organicos');
@@ -162,12 +174,10 @@ function displayKPIs(current, previous) {
         somaLabel.style.fontWeight = '500';
         somaLabel.style.color = 'var(--cor-texto-secundario)';
         somaLabel.style.margin = '0 0 0 0';
-        // posiciona antes do delta, para ficar entre o número e o delta
         organicoMain.insertBefore(somaLabel, deltaOrganicos);
     }
     somaLabel.textContent = `Soma do mês: ${current.organicos}`;
 
-    // deltas
     updateDelta('delta-total-leads', current.total, previous.total);
     updateDelta('delta-leads-organicos', current.organicos, previous.organicos);
     updateDelta('delta-leads-qualificados', current.qualificados, previous.qualificados);
