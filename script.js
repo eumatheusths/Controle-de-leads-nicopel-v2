@@ -130,7 +130,7 @@ function calculateKPIs(data) {
     const vendasFechadas = data.filter(l => l.status === 'Venda Fechada');
     return {
         total: data.length,
-        // CORREÇÃO AQUI: Usa a propriedade correta 'origem_crm'
+        // Usa a propriedade correta 'origem_crm'
         organicos: data.filter(l => normalizeText(l.origem_crm) === 'ORGANICO').length,
         qualificados: data.filter(l => l.status === 'Qualificado').length,
         vendas: vendasFechadas.length,
@@ -139,13 +139,35 @@ function calculateKPIs(data) {
     };
 }
 
+/* ====== ALTERADO: adiciona "Soma do mês" no card Leads Orgânicos ====== */
 function displayKPIs(current, previous) {
+    // valores principais
     document.getElementById('kpi-total-leads').innerText = current.total;
     document.getElementById('kpi-leads-organicos').innerText = current.organicos;
     document.getElementById('kpi-leads-qualificados').innerText = current.qualificados;
     document.getElementById('kpi-vendas-fechadas').innerText = current.vendas;
     document.getElementById('kpi-leads-desqualificados').innerText = current.desqualificados;
     document.getElementById('kpi-faturamento').innerText = current.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // insere a linha "Soma do mês" logo abaixo do número do KPI de orgânicos
+    const organicoValue = document.getElementById('kpi-leads-organicos');
+    const organicoMain = organicoValue.closest('.kpi-card-main');
+    const deltaOrganicos = document.getElementById('delta-leads-organicos');
+
+    let somaLabel = organicoMain.querySelector('.soma-mes-label');
+    if (!somaLabel) {
+        somaLabel = document.createElement('p');
+        somaLabel.className = 'soma-mes-label';
+        somaLabel.style.fontSize = '0.8rem';
+        somaLabel.style.fontWeight = '500';
+        somaLabel.style.color = 'var(--cor-texto-secundario)';
+        somaLabel.style.margin = '0 0 0 0';
+        // posiciona antes do delta, para ficar entre o número e o delta
+        organicoMain.insertBefore(somaLabel, deltaOrganicos);
+    }
+    somaLabel.textContent = `Soma do mês: ${current.organicos}`;
+
+    // deltas
     updateDelta('delta-total-leads', current.total, previous.total);
     updateDelta('delta-leads-organicos', current.organicos, previous.organicos);
     updateDelta('delta-leads-qualificados', current.qualificados, previous.qualificados);
@@ -153,6 +175,7 @@ function displayKPIs(current, previous) {
     updateDelta('delta-leads-desqualificados', current.desqualificados, previous.desqualificados, true);
     updateDelta('delta-faturamento', current.faturamento, previous.faturamento);
 }
+/* ===================== fim da alteração ===================== */
 
 function updateDelta(elementId, current, previous, invertColors = false) {
     const element = document.getElementById(elementId);
