@@ -247,8 +247,21 @@
             padding: 4rem;
         }
 
-        ol {
+        /* Estilos para a lista de motivos */
+        #top-motivos-container ol {
             padding-left: 20px;
+            margin-top: 1rem;
+        }
+
+        #top-motivos-container li {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        #top-motivos-container li:hover {
+            background-color: var(--cor-fundo);
         }
 
         #print-area {
@@ -459,9 +472,9 @@
                     </div>
                 </div>
                 
-                <!-- NOVO CARD: Comparativo Orgânicos vs RD vs Outros -->
+                <!-- CARD CORRIGIDO: Orgânicos vs Anúncios -->
                 <div class="chart-container">
-                    <h2 id="categorias-title">Categorias: Orgânico, RD e Outros</h2>
+                    <h2 id="categorias-title">Orgânicos vs Anúncios</h2>
                     <div class="chart-wrapper">
                         <canvas id="grafico-categorias"></canvas>
                     </div>
@@ -472,7 +485,7 @@
                     <div id="top-motivos-container"></div>
                 </div>
                 
-                <!-- NOVO CARD: Vendas Fechadas Detalhadas -->
+                <!-- Vendas Fechadas Detalhadas -->
                 <div class="chart-container">
                     <h2 id="vendas-detalhadas-title">Vendas Fechadas - Detalhes</h2>
                     <div id="vendas-detalhadas-container">
