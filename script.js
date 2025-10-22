@@ -190,6 +190,7 @@ function updateDashboard() {
     updateChartTitles(selectedMonth);
     updateChartData(currentData);
     renderTopMotivos(currentData);
+    renderVendasDetalhadas(currentData); // NOVA FUNÇÃO
 }
 
 // Obtém dados do mês anterior para comparação
@@ -304,7 +305,9 @@ function updateChartTitles(selectedMonth) {
     document.getElementById('segmento-title').innerText = `Análise por Segmento - ${monthTitle}`;
     document.getElementById('crm-title').innerText = `Análise de Origem (CRM) - ${monthTitle}`;
     document.getElementById('delegados-title').innerText = `Vendedor Delegado - ${monthTitle}`;
+    document.getElementById('organic-ads-title').innerText = `Comparativo: Orgânicos vs Anúncios - ${monthTitle}`;
     document.getElementById('motivos-title').innerText = `Top 5 Motivos de Perda - ${monthTitle}`;
+    document.getElementById('vendas-detalhadas-title').innerText = `Vendas Fechadas - Detalhes - ${monthTitle}`;
 }
 
 // Criação dos gráficos
@@ -313,6 +316,7 @@ function createCharts() {
     charts.segmento = createChart('grafico-segmento', 'bar');
     charts.crm = createChart('grafico-crm', 'pie');
     charts.delegados = createChart('grafico-delegados', 'bar');
+    charts.organic_ads = createChart('grafico-organic-ads', 'doughnut'); // NOVO GRÁFICO
     
     updateChartTheme();
 }
@@ -394,6 +398,7 @@ function updateChartData(data) {
     updateChartDataForProperty(charts.segmento, data, 'segmento');
     updateChartDataForProperty(charts.crm, data, 'origem_crm');
     updateChartDataForProperty(charts.delegados, data, 'delegado');
+    updateOrganicAdsChart(data); // NOVA FUNÇÃO
 }
 
 // Função auxiliar para atualizar dados de gráfico por propriedade
@@ -413,6 +418,55 @@ function updateChartDataForProperty(chart, data, property) {
     }];
     
     chart.update();
+}
+
+// NOVA FUNÇÃO: Atualiza o gráfico de orgânicos vs anúncios
+function updateOrganicAdsChart(data) {
+    if (!charts.organic_ads) return;
+    
+    // Normalização de strings para comparação
+    const normalize = (str) => str 
+        ? str.toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toUpperCase()
+        : '';
+    
+    let organicos = 0;
+    let anuncios = 0;
+    
+    data.forEach(lead => {
+        const isOrganico = normalize(lead.origem_crm) === 'ORGANICO' || 
+                          normalize(lead.origem_geral) === 'ORGANICO';
+        
+        const isAnuncio = normalize(lead.origem_crm).includes('ANUNCIO') || 
+                         normalize(lead.origem_geral).includes('ANUNCIO') ||
+                         normalize(lead.origem_crm).includes('ADS') || 
+                         normalize(lead.origem_geral).includes('ADS') ||
+                         normalize(lead.origem_crm).includes('PAGO') || 
+                         normalize(lead.origem_geral).includes('PAGO') ||
+                         normalize(lead.origem_crm).includes('GOOGLE') || 
+                         normalize(lead.origem_geral).includes('GOOGLE') ||
+                         normalize(lead.origem_crm).includes('FACEBOOK') || 
+                         normalize(lead.origem_geral).includes('FACEBOOK') ||
+                         normalize(lead.origem_crm).includes('META') || 
+                         normalize(lead.origem_geral).includes('META');
+        
+        if (isOrganico) {
+            organicos++;
+        } else if (isAnuncio) {
+            anuncios++;
+        }
+    });
+    
+    charts.organic_ads.data.labels = ['Orgânicos', 'Anúncios'];
+    charts.organic_ads.data.datasets = [{
+        data: [organicos, anuncios],
+        backgroundColor: ['#10B981', '#3B82F6'] // Verde para orgânicos, azul para anúncios
+    }];
+    
+    charts.organic_ads.update();
 }
 
 // Renderização dos motivos de perda
@@ -450,6 +504,61 @@ function renderTopMotivos(data) {
     });
     
     container.appendChild(list);
+}
+
+// NOVA FUNÇÃO: Renderiza a tabela de vendas detalhadas
+function renderVendasDetalhadas(data) {
+    const container = document.getElementById('vendas-detalhadas-container');
+    
+    // Filtra apenas vendas fechadas
+    const vendasFechadas = data.filter(lead => lead.status === 'Venda Fechada');
+    
+    if (vendasFechadas.length === 0) {
+        container.innerHTML = `
+            <p style="color: var(--cor-texto-secundario); text-align: center; padding: 2rem;">
+                Nenhuma venda fechada no período selecionado.
+            </p>
+        `;
+        return;
+    }
+    
+    // Ordena por valor (maior primeiro)
+    vendasFechadas.sort((a, b) => b.valor - a.valor);
+    
+    let tableHTML = `
+        <table class="vendas-table">
+            <thead>
+                <tr>
+                    <th>Valor do Pedido</th>
+                    <th>Segmento</th>
+                    <th>Origem</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    vendasFechadas.forEach(venda => {
+        tableHTML += `
+            <tr>
+                <td class="valor-cell">${venda.valor.toLocaleString('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                })}</td>
+                <td>${venda.segmento || 'Não informado'}</td>
+                <td>${venda.origem_geral || venda.origem_crm || 'Não informado'}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--cor-texto-secundario);">
+            Total de ${vendasFechadas.length} venda(s) fechada(s)
+        </p>
+    `;
+    
+    container.innerHTML = tableHTML;
 }
 
 // Geração de relatório para impressão
@@ -493,6 +602,47 @@ function generateAndPrintReport(data, period) {
     const segmentoCounts = countByProperty(data, 'segmento');
     const delegadoCounts = countByProperty(data, 'delegado');
     
+    // Contagem orgânicos vs anúncios
+    const normalize = (str) => str 
+        ? str.toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toUpperCase()
+        : '';
+    
+    let organicos = 0;
+    let anuncios = 0;
+    
+    data.forEach(lead => {
+        const isOrganico = normalize(lead.origem_crm) === 'ORGANICO' || 
+                          normalize(lead.origem_geral) === 'ORGANICO';
+        
+        const isAnuncio = normalize(lead.origem_crm).includes('ANUNCIO') || 
+                         normalize(lead.origem_geral).includes('ANUNCIO') ||
+                         normalize(lead.origem_crm).includes('ADS') || 
+                         normalize(lead.origem_geral).includes('ADS') ||
+                         normalize(lead.origem_crm).includes('PAGO') || 
+                         normalize(lead.origem_geral).includes('PAGO') ||
+                         normalize(lead.origem_crm).includes('GOOGLE') || 
+                         normalize(lead.origem_geral).includes('GOOGLE') ||
+                         normalize(lead.origem_crm).includes('FACEBOOK') || 
+                         normalize(lead.origem_geral).includes('FACEBOOK') ||
+                         normalize(lead.origem_crm).includes('META') || 
+                         normalize(lead.origem_geral).includes('META');
+        
+        if (isOrganico) {
+            organicos++;
+        } else if (isAnuncio) {
+            anuncios++;
+        }
+    });
+    
+    const organicAdsCounts = {
+        'Orgânicos': organicos,
+        'Anúncios': anuncios
+    };
+    
     // Motivos de perda
     const topMotivos = data
         .filter(lead => lead.status === 'Desqualificado' && lead.motivo_nao)
@@ -502,6 +652,14 @@ function generateAndPrintReport(data, period) {
             return acc;
         }, {});
     
+    // Vendas fechadas para o relatório
+    const vendasFechadas = data.filter(lead => lead.status === 'Venda Fechada');
+    const vendasItems = {};
+    vendasFechadas.forEach((venda, index) => {
+        vendasItems[`Venda ${index + 1}`] = 
+            `${venda.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | ${venda.segmento || 'N/I'} | ${venda.origem_geral || venda.origem_crm || 'N/I'}`;
+    });
+    
     // Monta o HTML do relatório
     let reportHTML = `
         <h1>Relatório de Análise de Leads</h1>
@@ -510,7 +668,9 @@ function generateAndPrintReport(data, period) {
         ${createCardGrid('Origem dos Leads', origemCounts)}
         ${createCardGrid('Análise por Segmento', segmentoCounts)}
         ${createCardGrid('Distribuição por Responsável', delegadoCounts)}
+        ${createCardGrid('Orgânicos vs Anúncios', organicAdsCounts)}
         ${createCardGrid('Top 5 Motivos de Perda', topMotivos)}
+        ${createCardGrid('Vendas Fechadas Detalhadas', vendasItems)}
     `;
     
     printArea.innerHTML = reportHTML;
