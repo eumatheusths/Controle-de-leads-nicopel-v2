@@ -199,19 +199,30 @@
         }
 
         /* Estilos para a tabela de vendas */
+        .vendas-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border: 1px solid var(--cor-borda);
+            border-radius: 8px;
+        }
+
         .vendas-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
         }
 
         .vendas-table th {
+            position: sticky;
+            top: 0;
+            background-color: var(--cor-card);
             text-align: left;
             padding: 0.75rem;
             border-bottom: 1px solid var(--cor-borda);
             font-weight: 600;
             color: var(--cor-texto-secundario);
             font-size: 0.875rem;
+            z-index: 1;
         }
 
         .vendas-table td {
@@ -448,11 +459,11 @@
                     </div>
                 </div>
                 
-                <!-- NOVO CARD: Comparativo Orgânicos vs Anúncios -->
+                <!-- NOVO CARD: Comparativo Orgânicos vs RD vs Outros -->
                 <div class="chart-container">
-                    <h2 id="organic-ads-title">Comparativo: Orgânicos vs Anúncios</h2>
+                    <h2 id="categorias-title">Categorias: Orgânico, RD e Outros</h2>
                     <div class="chart-wrapper">
-                        <canvas id="grafico-organic-ads"></canvas>
+                        <canvas id="grafico-categorias"></canvas>
                     </div>
                 </div>
                 
