@@ -90,9 +90,9 @@ function processData(rawData) {
                 segmento: row[colIndex.segmento],
                 delegado: row[colIndex.delegado],
                 motivo_nao: row[colIndex.motivo_nao],
-                categoria: categoria // NOVA PROPRIEDADE - baseada apenas na coluna C
+                categoria: categoria
             };
-        }).filter(r => r.origem_geral || r.segmento);
+        }).filter(r => r.origem_geral || r.segmento || r.origem_crm); // AJUSTE: Incluir leads com origem_crm
         
         processedData.push(...rows);
     });
@@ -102,14 +102,18 @@ function processData(rawData) {
 
 // Determina o status do lead
 function determinarStatus(statusVenda, statusQualificado) {
-    if (statusVenda?.toUpperCase() === 'SIM') return 'Venda Fechada';
-    if (statusQualificado?.toUpperCase() === 'SIM') return 'Qualificado';
-    if (statusQualificado?.toUpperCase() === 'NÃO') return 'Desqualificado';
+    // AJUSTE: Melhorar a lógica de detecção de status
+    const venda = String(statusVenda || '').toUpperCase().trim();
+    const qualificado = String(statusQualificado || '').toUpperCase().trim();
+    
+    if (venda === 'SIM') return 'Venda Fechada';
+    if (qualificado === 'SIM') return 'Qualificado';
+    if (qualificado === 'NÃO' || qualificado === 'NAO') return 'Desqualificado';
     
     return 'Em Negociação';
 }
 
-// NOVA FUNÇÃO: Determina a categoria do lead baseado APENAS na coluna C (origem_crm)
+// Determina a categoria do lead baseado APENAS na coluna C (origem_crm)
 function determinarCategoriaOrigemCRM(origemCRM) {
     // Normalização de strings para comparação
     const normalize = (str) => str 
@@ -122,8 +126,10 @@ function determinarCategoriaOrigemCRM(origemCRM) {
     
     const origemCRMNormalized = normalize(origemCRM);
     
-    // Verifica se é Orgânico
-    if (origemCRMNormalized === 'ORGANICO' || origemCRMNormalized === 'ORGÂNICO') {
+    // AJUSTE: Expandir termos para identificar orgânicos
+    const termosOrganicos = ['ORGANICO', 'ORGÂNICO', 'ORGANICOS', 'ORGÂNICOS'];
+    
+    if (termosOrganicos.some(termo => origemCRMNormalized === termo)) {
         return 'Orgânico';
     }
     
@@ -135,13 +141,16 @@ function determinarCategoriaOrigemCRM(origemCRM) {
 function parseValorMonetario(valorStr) {
     if (!valorStr) return 0;
     
+    // AJUSTE: Melhorar o parsing de valores monetários
     const valorLimpo = valorStr
+        .toString()
         .replace('R$', '')
         .replace(/\./g, '')
         .replace(',', '.')
         .trim();
     
-    return parseFloat(valorLimpo) || 0;
+    const valorNum = parseFloat(valorLimpo);
+    return isNaN(valorNum) ? 0 : valorNum;
 }
 
 // Inicialização do dashboard
@@ -359,8 +368,13 @@ function createChart(canvasId, type) {
             },
             scales: type === 'bar' 
                 ? { 
-                    y: { grid: {} }, 
-                    x: { grid: { color: 'transparent' } } 
+                    y: { 
+                        grid: {},
+                        beginAtZero: true
+                    }, 
+                    x: { 
+                        grid: { color: 'transparent' }
+                    } 
                 } 
                 : {}
         }
@@ -413,7 +427,7 @@ function updateChartData(data) {
     updateChartDataForProperty(charts.segmento, data, 'segmento');
     updateChartDataForProperty(charts.crm, data, 'origem_crm');
     updateChartDataForProperty(charts.delegados, data, 'delegado');
-    updateCategoriasChart(data); // FUNÇÃO CORRIGIDA
+    updateCategoriasChart(data);
 }
 
 // Função auxiliar para atualizar dados de gráfico por propriedade
@@ -421,21 +435,33 @@ function updateChartDataForProperty(chart, data, property) {
     if (!chart) return;
     
     const counts = data.reduce((acc, item) => {
-        const key = item[property] || 'Não preenchido';
+        // AJUSTE: Melhorar tratamento de valores nulos/vazios
+        let key = item[property];
+        
+        if (!key || key.toString().trim() === '') {
+            key = 'Não informado';
+        } else {
+            key = key.toString().trim();
+        }
+        
         acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {});
     
-    chart.data.labels = Object.keys(counts);
+    // AJUSTE: Ordenar por quantidade (do maior para o menor)
+    const sortedEntries = Object.entries(counts)
+        .sort(([,a], [,b]) => b - a);
+    
+    chart.data.labels = sortedEntries.map(([key]) => key);
     chart.data.datasets = [{
-        data: Object.values(counts),
+        data: sortedEntries.map(([,value]) => value),
         backgroundColor: CORES_GRAFICOS
     }];
     
     chart.update();
 }
 
-// FUNÇÃO CORRIGIDA: Atualiza o gráfico de Orgânicos vs Anúncios baseado apenas na coluna C
+// Atualiza o gráfico de Orgânicos vs Anúncios baseado apenas na coluna C
 function updateCategoriasChart(data) {
     if (!charts.categorias) return;
     
@@ -460,7 +486,7 @@ function updateCategoriasChart(data) {
     charts.categorias.update();
 }
 
-// FUNÇÃO CORRIGIDA: Renderização dos motivos de perda com espaçamento
+// Renderização dos motivos de perda com espaçamento
 function renderTopMotivos(data) {
     const container = document.getElementById('top-motivos-container');
     container.innerHTML = '';
@@ -468,7 +494,15 @@ function renderTopMotivos(data) {
     const motivos = data
         .filter(lead => lead.status === 'Desqualificado' && lead.motivo_nao)
         .reduce((acc, lead) => {
-            const motivo = lead.motivo_nao.trim();
+            // AJUSTE: Melhorar tratamento de motivos
+            let motivo = lead.motivo_nao;
+            
+            if (!motivo || motivo.toString().trim() === '') {
+                motivo = 'Motivo não informado';
+            } else {
+                motivo = motivo.toString().trim();
+            }
+            
             acc[motivo] = (acc[motivo] || 0) + 1;
             return acc;
         }, {});
@@ -491,9 +525,9 @@ function renderTopMotivos(data) {
     topMotivos.forEach(([motivo, count]) => {
         const listItem = document.createElement('li');
         listItem.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>${motivo}</span>
-                <span style="font-weight: bold; color: var(--cor-texto-principal);">${count}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                <span style="flex: 1;">${motivo}</span>
+                <span style="font-weight: bold; color: var(--cor-texto-principal); margin-left: 16px;">${count}</span>
             </div>
         `;
         list.appendChild(listItem);
@@ -502,7 +536,7 @@ function renderTopMotivos(data) {
     container.appendChild(list);
 }
 
-// FUNÇÃO CORRIGIDA: Renderiza a tabela de vendas detalhadas com origem correta
+// Renderiza a tabela de vendas detalhadas com origem correta
 function renderVendasDetalhadas(data) {
     const container = document.getElementById('vendas-detalhadas-container');
     
@@ -538,6 +572,7 @@ function renderVendasDetalhadas(data) {
     vendasFechadas.forEach(venda => {
         // CORREÇÃO: Prioriza a coluna C (origem_crm) para mostrar a origem correta
         const origemCorreta = venda.origem_crm || venda.origem_geral || 'Não informado';
+        const segmento = venda.segmento || 'Não informado';
         
         tableHTML += `
             <tr>
@@ -545,7 +580,7 @@ function renderVendasDetalhadas(data) {
                     style: 'currency', 
                     currency: 'BRL' 
                 })}</td>
-                <td>${venda.segmento || 'Não informado'}</td>
+                <td>${segmento}</td>
                 <td>${origemCorreta}</td>
                 <td>${venda.categoria || 'Anúncio'}</td>
             </tr>
@@ -615,7 +650,12 @@ function generateAndPrintReport(data, period) {
     const topMotivos = data
         .filter(lead => lead.status === 'Desqualificado' && lead.motivo_nao)
         .reduce((acc, lead) => {
-            const motivo = lead.motivo_nao.trim();
+            let motivo = lead.motivo_nao;
+            if (!motivo || motivo.toString().trim() === '') {
+                motivo = 'Motivo não informado';
+            } else {
+                motivo = motivo.toString().trim();
+            }
             acc[motivo] = (acc[motivo] || 0) + 1;
             return acc;
         }, {});
@@ -624,10 +664,10 @@ function generateAndPrintReport(data, period) {
     const vendasFechadas = data.filter(lead => lead.status === 'Venda Fechada');
     const vendasItems = {};
     vendasFechadas.forEach((venda, index) => {
-        // CORREÇÃO: Prioriza a coluna C (origem_crm) para mostrar a origem correta
         const origemCorreta = venda.origem_crm || venda.origem_geral || 'N/I';
+        const segmento = venda.segmento || 'N/I';
         vendasItems[`Venda ${index + 1}`] = 
-            `${venda.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | ${venda.segmento || 'N/I'} | ${origemCorreta} | ${venda.categoria || 'Anúncio'}`;
+            `${venda.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | ${segmento} | ${origemCorreta} | ${venda.categoria || 'Anúncio'}`;
     });
     
     // Monta o HTML do relatório
@@ -650,7 +690,14 @@ function generateAndPrintReport(data, period) {
 // Função auxiliar para contar por propriedade
 function countByProperty(data, property) {
     return data.reduce((acc, item) => {
-        const key = item[property] || 'N/A';
+        let key = item[property];
+        
+        if (!key || key.toString().trim() === '') {
+            key = 'Não informado';
+        } else {
+            key = key.toString().trim();
+        }
+        
         acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {});
