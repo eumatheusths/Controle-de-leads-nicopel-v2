@@ -198,6 +198,37 @@
             flex-grow: 1;
         }
 
+        /* Estilos para a tabela de vendas */
+        .vendas-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .vendas-table th {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--cor-borda);
+            font-weight: 600;
+            color: var(--cor-texto-secundario);
+            font-size: 0.875rem;
+        }
+
+        .vendas-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--cor-borda);
+            font-size: 0.875rem;
+        }
+
+        .vendas-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .valor-cell {
+            font-weight: 600;
+            color: var(--cor-verde);
+        }
+
         /* Estados */
         #loading-message {
             text-align: center;
@@ -417,9 +448,27 @@
                     </div>
                 </div>
                 
+                <!-- NOVO CARD: Comparativo Orgânicos vs Anúncios -->
+                <div class="chart-container">
+                    <h2 id="organic-ads-title">Comparativo: Orgânicos vs Anúncios</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="grafico-organic-ads"></canvas>
+                    </div>
+                </div>
+                
                 <div class="chart-container">
                     <h2 id="motivos-title">Top 5 Motivos de Perda</h2>
                     <div id="top-motivos-container"></div>
+                </div>
+                
+                <!-- NOVO CARD: Vendas Fechadas Detalhadas -->
+                <div class="chart-container">
+                    <h2 id="vendas-detalhadas-title">Vendas Fechadas - Detalhes</h2>
+                    <div id="vendas-detalhadas-container">
+                        <p style="color: var(--cor-texto-secundario); text-align: center; padding: 2rem;">
+                            Carregando informações de vendas...
+                        </p>
+                    </div>
                 </div>
             </section>
         </main>
