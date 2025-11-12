@@ -1,5 +1,6 @@
 export default async function handler(request, response) {
   const API_KEY = process.env.GOOGLE_API_KEY;
+  // MUDANÇA AQUI: Corrigido o ID para a planilha de Leads
   const SPREADSHEET_ID = '1liAOj2nkSiTZrPklpG8CD4OwvPtmeRdLD2vgCQw94hc';
 
   try {
